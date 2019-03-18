@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+
+BUILD
+Adafruit_GFX/.hg
