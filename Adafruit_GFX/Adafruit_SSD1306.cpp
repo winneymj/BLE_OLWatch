@@ -38,8 +38,7 @@
 // Ref: Section 2.1 (Command Table for Charge Bump Setting)
 #define CMD_CHARGEPUMP                  (0x8D)
 
-// define the Serial object
-Serial myPC(USBTX, USBRX);
+extern Serial pc;
 
 void Adafruit_SSD1306::begin(bool extvcc)
 {
@@ -259,104 +258,119 @@ void Adafruit_SSD1306::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t c
 
 void Adafruit_SSD1306::drawFastVLineInternal(int16_t x, int16_t __y, int16_t __h, uint16_t colr)
 {
-  if((x >= 0) && (x < WIDTH))
+  // do nothing if we're off the left or right side of the screen
+  if(x < 0 || x >= WIDTH) { return; }
+
+  // make sure we don't try to draw below 0
+  if(__y < 0)
   {
-    if(__y < 0)
+    __h += __y;
+    __y = 0;
+  }
+
+  // make sure we don't go past the height of the display
+  if((__y + __h) > HEIGHT)
+  {
+    __h = (HEIGHT - __y);
+  }
+
+  // if our height is now negative, punt
+  if(__h <= 0) {
+    return;
+  }
+
+  // this display doesn't need ints for coordinates, use local byte registers for faster juggling
+  register uint8_t  y = __y;
+  register uint8_t  h = __h;
+
+  // set up the pointer for fast movement through the buffer
+  register uint8_t *pBuf = _frmbuf;
+  // adjust the buffer pointer for the current row
+  pBuf += ((y/8) * WIDTH);
+  // and offset x columns in
+  pBuf += x;
+
+  // uint8_t i = (y/8)*WIDTH+x;
+
+  // do the first partial byte, if necessary - this requires some masking
+  register uint8_t mod = (y&7);
+  if(mod)
+  {
+    // mask off the high n bits we want to set
+    mod = 8-mod;
+    static const uint8_t premask[8] = {0x00, 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE};
+    uint8_t mask = premask[mod];
+
+    // adjust the mask if we're not going to reach the end of this byte
+    if(h < mod)
     {
-      __h += __y;
-      __y = 0;
+      mask &= (0XFF >> (mod-h));
     }
-    if((__y+__h) > HEIGHT)
+
+    switch(colr)
     {
-      __h = (HEIGHT-__y);
+      case WHITE:   *pBuf |=  mask;  break;
+      case BLACK:   *pBuf &= ~mask;  break;
+      case INVERSE: *pBuf ^=  mask;  break;
     }
-    if(__h > 0)
+
+    // fast exit if we're done here!
+    if(h < mod) { return; }
+
+    h -= mod;
+
+    pBuf += WIDTH;
+  }
+
+  // write solid bytes while we can - effectively doing 8 rows at a time
+  if(h >= 8)
+  {
+    if(colr == INVERSE) // write solid bytes while we can - effectively doing 8 rows at a time
     {
-      uint8_t  y = __y, h = __h;
-      uint8_t i = (y/8)*WIDTH+x;
-
-      uint8_t mod = (y&7);
-      if(mod)
+      do
       {
-        mod = 8-mod;
-        static const uint8_t premask[8] =
-        {
-          0x00, 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE
-        };
-        uint8_t mask = premask[mod];
+        *pBuf=~(*pBuf);
+        // adjust the buffer forward 8 rows worth of data
+        pBuf += WIDTH;
 
-        if(h < mod)
-        {
-          mask &= (0XFF>>(mod-h));
-        }
+        // adjust h & y (there's got to be a faster way for me to do this, but this should still help a fair bit for now)
+        h -= 8;
+      } while(h >= 8);
+    }
+    else
+    {
+      // store a local value to work with
+      uint8_t val = (colr != BLACK) ? 255 : 0;
 
-        switch(colr)
-        {
-          case WHITE:
-            _frmbuf[i] |= mask;
-            break;
-          case BLACK:
-            _frmbuf[i] &= ~mask;
-            break;
-          case INVERSE:
-            _frmbuf[i] ^=  mask;
-            break;
-        }
-        i += WIDTH;
-      }
-
-      if(h >= mod)
+      do
       {
-        h -= mod;
-        if(h >= 8)
-        {
-          if(colr == INVERSE)
-          {
-            do
-            {
-              _frmbuf[i] ^= 0xFF;
-              i += WIDTH;
-              h -= 8;
-            }
-            while(h >= 8);
-          }
-          else
-          {
-            uint8_t val = (colr != BLACK) ? 255 : 0;
+        // write our value in
+        *pBuf = val;
 
-            do
-            {
-              _frmbuf[i] = val;
-              i += WIDTH;
-              h -= 8;
-            }
-            while(h >= 8);
-          }
-        }
+        // adjust the buffer forward 8 rows worth of data
+        pBuf += WIDTH;
 
-        if(h)
-        {
-          mod = h&7;
-          static const uint8_t postmask[8] =
-          {
-            0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F
-          };
-          uint8_t mask = postmask[mod];
+        // adjust h & y (there's got to be a faster way for me to do this, but this should still help a fair bit for now)
+        h -= 8;
+      } while(h >= 8);
+    }
+  }
 
-          switch(colr)
-          {
-            case WHITE:
-              _frmbuf[i] |= mask;
-              break;
-            case BLACK:
-              _frmbuf[i] &= ~mask;
-              break;
-            case INVERSE:
-              _frmbuf[i] ^= mask;
-              break;
-          }
-        }
-      }
+  // now do the final partial byte, if necessary
+  if(h)
+  {
+    mod = h & 7;
+    // this time we want to mask the low bits of the byte, vs the high bits we did above
+    // register uint8_t mask = (1 << mod) - 1;
+    // note - lookup table results in a nearly 10% performance improvement in fill* functions
+    static const uint8_t postmask[8] = {0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F};
+    uint8_t mask = postmask[mod];
+
+    switch(colr)
+    {
+      case WHITE:   *pBuf |=  mask;  break;
+      case BLACK:   *pBuf &= ~mask;  break;
+      case INVERSE: *pBuf ^=  mask;  break;
     }
   }
 }

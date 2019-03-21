@@ -262,20 +262,23 @@ private:
 
         // Solid led if advertising
         if (gapState.advertising) {
+            display.fillRect(0, 0, display.width(), display.height(), WHITE);
             _led1.write(0);
         }
         else if (gapState.connected) {
             _led1 = !_led1;
+            display.fillRect(0, 0, display.width(), display.height(), (_led1) ? WHITE :  BLACK);
         }
 
+        display.display(); // Update screen with each newly-drawn rectangle
 //----------------------------------------
-        display.clearDisplay();
+        // display.clearDisplay();
 
-        for(int16_t i=0; i<display.height()/2; i+=2) {
-            display.drawRect(i, i, display.width()-2*i, display.height()-2*i, WHITE);
-            display.display(); // Update screen with each newly-drawn rectangle
-            wait_ms(1);
-        }
+        // for(int16_t i=0; i<display.height()/2; i+=2) {
+        //     display.drawRect(i, i, display.width()-2*i, display.height()-2*i, WHITE);
+        //     display.display(); // Update screen with each newly-drawn rectangle
+        //     wait_ms(1);
+        // }
 //----------------------------------------
     };
 
