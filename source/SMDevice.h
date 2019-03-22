@@ -267,7 +267,7 @@ private:
         }
         else if (gapState.connected) {
             _led1 = !_led1;
-            display.fillRect(0, 0, display.width(), display.height(), (_led1) ? BLACK : WHITE);
+            display.fillRect(0, 0, display.width(), display.height(), _led1 ? BLACK : WHITE);
         }
 
         display.display(); // Update screen with each newly-drawn rectangle
