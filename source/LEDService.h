@@ -20,24 +20,35 @@
 class LEDService {
 public:
     const static uint16_t LED_SERVICE_UUID              = 0xA000;
-    const static uint16_t LED_STATE_CHARACTERISTIC_UUID = 0xA001;
+    const static uint16_t LED_STATE_CHARACTERISTIC_UUID = 0xA002;
+    const static uint16_t MESSAGE_CHARACTERISTIC_UUID   = 0xA001;
 
-    LEDService(BLEDevice &_ble, bool initialValueForLEDCharacteristic) :
-        ble(_ble), ledState(LED_STATE_CHARACTERISTIC_UUID, &initialValueForLEDCharacteristic)
+    // LEDService(BLEDevice &_ble, bool initialValueForLEDCharacteristic) :
+    //     ble(_ble), ledState(LED_STATE_CHARACTERISTIC_UUID, &initialValueForLEDCharacteristic)
+    // {
+    //     GattCharacteristic *charTable[] = {&ledState};
+    //     GattService         ledService(LED_SERVICE_UUID, charTable, sizeof(charTable) / sizeof(GattCharacteristic *));
+    //     ble.addService(ledService);
+    // }
+
+    LEDService(BLEDevice &_ble): ble(_ble), writeValue{0}, _message(MESSAGE_CHARACTERISTIC_UUID, writeValue)
     {
-        GattCharacteristic *charTable[] = {&ledState};
+        GattCharacteristic *charTable[] = {&_message};
         GattService         ledService(LED_SERVICE_UUID, charTable, sizeof(charTable) / sizeof(GattCharacteristic *));
         ble.addService(ledService);
     }
 
     GattAttribute::Handle_t getValueHandle() const
     {
-        return ledState.getValueHandle();
+        // return ledState.getValueHandle();
+        return _message.getValueHandle();
     }
 
 private:
-    BLEDevice                         &ble;
-    ReadWriteGattCharacteristic<bool> ledState;
+    BLEDevice &ble;
+    // ReadWriteGattCharacteristic<bool> ledState;
+    WriteOnlyArrayGattCharacteristic<uint8_t, 32> _message;
+    uint8_t writeValue[32];
 };
 
 #endif /* #ifndef __BLE_LED_SERVICE_H__ */

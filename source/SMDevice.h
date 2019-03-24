@@ -163,10 +163,17 @@ private:
      */
     void onDataWrittenCallback(const GattWriteCallbackParams *params) {
         printf("SMDevice:onDataWrittenCallback: ENTER\r\n");
-        if ((params->handle == ledServicePtr->getValueHandle()) && (params->len == 1)) {
-            printf("onDataWrittenCallback:" + *(params->data));
-            printf("\r\n");
-            // actuatedLED = *(params->data);
+        printf("SMDevice:onDataWrittenCallback: params->len=%d\r\n", params->len);
+        if ((params->handle == ledServicePtr->getValueHandle())) {
+            printf("GOT MATCH\r\n");
+            // char *data = params->data;
+            char buffer[32] = {0};
+            std::strncpy(buffer, (char *)params->data, params->len);
+            // for (int x = 0; x < params->len; x++)
+            // {
+            //     printf("0x%X,", params->data[x]);
+            // }
+            printf("onDataWrittenCallback:%s\r\n", buffer);
         }
         printf("SMDevice:onDataWrittenCallback: EXIT\r\n");
     }
@@ -213,7 +220,8 @@ private:
         _ble.gattServer().onDataWritten(this, &SMDevice::onDataWrittenCallback);
         
         bool initialValueForLEDCharacteristic = false;
-        ledServicePtr = new LEDService(_ble, initialValueForLEDCharacteristic);
+        // ledServicePtr = new LEDService(_ble, initialValueForLEDCharacteristic);
+        ledServicePtr = new LEDService(_ble);
 
         /* start test in 500 ms */
         _event_queue.call_in(500, this, &SMDevice::start);
