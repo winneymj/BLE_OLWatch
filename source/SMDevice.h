@@ -166,14 +166,29 @@ private:
         printf("SMDevice:onDataWrittenCallback: params->len=%d\r\n", params->len);
         if ((params->handle == ledServicePtr->getValueHandle())) {
             printf("GOT MATCH\r\n");
-            // char *data = params->data;
-            char buffer[32] = {0};
+            char *dataPtr = (char *)params->data;
+            char buffer[240] = {0};
+            // 1st character could be a row number, pull it off
+            std::strncpy(buffer, (char *)params->data, 1);
+            // Convert to a number
+            int row = std::atoi(buffer);
+            printf("row=%d,", row);
+
             std::strncpy(buffer, (char *)params->data, params->len);
-            // for (int x = 0; x < params->len; x++)
-            // {
-            //     printf("0x%X,", params->data[x]);
-            // }
+            for (int x = 0; x < params->len; x++)
+            {
+                printf("0x%X,", params->data[x]);
+            }
+
+            
             printf("onDataWrittenCallback:%s\r\n", buffer);
+            // display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
+            display.setTextSize(1);             // Normal 1:1 pixel scale
+            display.setTextColour(WHITE);        // Draw white text
+            display.setCursor(0, row * 10);             // Start at top-left corner
+            display.printf(buffer);
+            display.display();
+
         }
         printf("SMDevice:onDataWrittenCallback: EXIT\r\n");
     }
@@ -270,12 +285,12 @@ private:
 
         // Solid led if advertising
         if (gapState.advertising) {
-            display.fillRect(0, 0, display.width(), display.height(), WHITE);
+            display.fillCircle(8, 5, 5, WHITE);
             _led1.write(0);
         }
         else if (gapState.connected) {
             _led1 = !_led1;
-            display.fillRect(0, 0, display.width(), display.height(), _led1 ? BLACK : WHITE);
+            display.fillCircle(8, 5, 5, _led1 ? BLACK : WHITE);
         }
 
         display.display(); // Update screen with each newly-drawn rectangle
