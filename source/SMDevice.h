@@ -22,6 +22,7 @@
 #include "LEDService.h"
 #include "Adafruit_GFX.h"
 #include "Adafruit_SSD1306.h"
+#include "utils/NotificationBuffer.h"
 
 /** This example demonstrates all the basic setup required
  *  for pairing and setting up link security both as a central and peripheral
@@ -36,6 +37,9 @@
 
 static const uint8_t DEVICE_NAME[] = "SM_device";
 static const uint16_t uuid16_list[] = {LEDService::LED_SERVICE_UUID};
+static const uint8_t BT_TYPE_WRITE_SETUP = 0x00;
+static const uint8_t BT_TYPE_WRITE_DIRECT = 0x04;
+static const uint8_t DIRECT_WRITE_HEADER_SIZE = 0x03;
 
 // define the Serial object
 // Serial pc(USBTX, USBRX);
@@ -59,7 +63,9 @@ public:
         _ble(ble),
         _event_queue(event_queue),
         _handle(0),
-        _is_connecting(false) { };
+        _is_connecting(false),
+        _receiveTotalLength(0),
+        _receiveBuffer(NULL) { };
 
     virtual ~SMDevice()
     {
@@ -122,6 +128,8 @@ public:
         printf("SMDevice:pairingResult: ENTER\r\n");
         if (result == SecurityManager::SEC_STATUS_SUCCESS) {
             printf("Pairing successful\r\n");
+            // Clean down notification buffer
+            notificationBuffer.reset();
         } else {
             printf("Pairing failed\r\n");
         }
@@ -166,28 +174,110 @@ private:
         printf("SMDevice:onDataWrittenCallback: params->len=%d\r\n", params->len);
         if ((params->handle == ledServicePtr->getValueHandle())) {
             printf("GOT MATCH\r\n");
-            char *dataPtr = (char *)params->data;
-            char buffer[240] = {0};
-            // 1st character could be a row number, pull it off
-            std::strncpy(buffer, (char *)params->data, 1);
-            // Convert to a number
-            int row = std::atoi(buffer);
-            printf("row=%d,", row);
+            const uint8_t *dataPtr = params->data;
 
-            std::strncpy(buffer, (char *)params->data, params->len);
-            for (int x = 0; x < params->len; x++)
-            {
-                printf("0x%X,", params->data[x]);
+            // Get the message type
+            const uint8_t messageType = (dataPtr[0] >> 4);
+
+            if (BT_TYPE_WRITE_SETUP == messageType) {
+                _receiveTotalLength = dataPtr[3];
+                _receiveTotalLength = (_receiveTotalLength << 8) | dataPtr[2];
+                _receiveTotalLength = (_receiveTotalLength << 8) | dataPtr[1];
+
+                // // the offset of the current block with regards to the overall characteristic
+                // receiveLengthOffset = message[6];
+                // receiveLengthOffset = (receiveLengthOffset << 8) | message[5];
+                // receiveLengthOffset = (receiveLengthOffset << 8) | message[4];
+
+                // reset relation between absolute and relative fragment number
+                // receiveFragmentOffset = 0;
+
+                // fragments in block, number is send LSB
+                _receiveTotalFragments = dataPtr[9];
+                _receiveTotalFragments = (_receiveTotalFragments << 8) | dataPtr[8];
+                _receiveTotalFragments = (_receiveTotalFragments << 8) | dataPtr[7];                
+
+                if (NULL == _receiveBuffer)
+                {
+                    delete _receiveBuffer;
+                }
+
+                // Allocate buffer to store incoming message
+                _receiveBuffer = (uint8_t *)malloc(_receiveTotalLength + 1);
+                memset(_receiveBuffer, 0, _receiveTotalLength + 1);
+
+                printf("onDataWrittenCallback:BT_TYPE_WRITE_SETUP:_receiveTotalLength=%d,_receiveTotalFragments=%d\r\n", _receiveTotalLength, _receiveTotalFragments);
+            } else if (BT_TYPE_WRITE_DIRECT == messageType) {
+                /*  Direct write message received.
+                    Send payload to upper layer.
+                */
+
+                // payload length
+                uint16_t payloadLength = params->len - DIRECT_WRITE_HEADER_SIZE;
+                // uint8_t* buffer = (uint8_t*) malloc(payloadLength);
+
+                printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:payloadLength=%d\r\n", payloadLength);
+
+                // only continue if allocation was successful
+                if (NULL != _receiveBuffer)
+                {
+                    // allocate reference counted dynamic memory buffer
+                    // SharedPointer<BlockStatic> block(new BlockDynamic(buffer, payloadLength));
+
+                    // set offset of the current block with regards to the overall characteristic
+                    uint32_t offset;
+                    offset = dataPtr[2];
+                    offset = (offset << 8) | dataPtr[1];
+                    // offset = (offset << 4) | (dataPtr[0] & 0x0F);
+                    // block->setOffset(offset);
+
+                    printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:memcpy, offset=%d,payloadLength=%d\r\n", offset, payloadLength);
+
+                    // copy payload
+                    memcpy(&_receiveBuffer[offset], (const void*)&dataPtr[3], payloadLength);
+
+                    printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:_receiveBuffer=%s\r\n", _receiveBuffer);
+                    /*  Full block received. No change in state.
+                        Signal upper layer of write request.
+                    */
+                    // writeDoneHandler.call(block);
+                }                
             }
 
+            // char buffer[240] = {0};
+            // std::strncpy(buffer, (char *)params->data, params->len);
+
+            // // Push to buffer for later processing.
+            // notificationBuffer.push(buffer);
+
+            // printf("onDataWrittenCallback:push:%s,len=%d\r\n", buffer, notificationBuffer.size());
+
+            // // Null down after 1st character
+            // // 1st character could be a row number, pull it off
+            // buffer[1] = '\0';
+            // // Convert to a number
+            // int row = std::atoi(buffer);
+            // printf("row=%d,", row);
+
+            // // Check for end of message and add processing
+            // // to queue.
+            // if (row == 9) {
+            //     _event_queue.call(NotificationBufferHelper::processBuffer);
+            // }
+            // // std::strncpy(buffer, (char *)params->data, params->len);
+            // // for (int x = 0; x < params->len; x++)
+            // // {
+            // //     printf("0x%X,", params->data[x]);
+            // // }
             
-            printf("onDataWrittenCallback:%s\r\n", buffer);
-            // display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
-            display.setTextSize(1);             // Normal 1:1 pixel scale
-            display.setTextColour(WHITE);        // Draw white text
-            display.setCursor(0, row * 10);             // Start at top-left corner
-            display.printf(buffer);
-            display.display();
+            // // printf("onDataWrittenCallback:%s\r\n", buffer);
+            // // display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
+            // display.setTextSize(1);             // Normal 1:1 pixel scale
+            // display.setTextColour(WHITE);        // Draw white text
+            // display.setCursor(0, row * 10);             // Start at top-left corner
+            // display.printf(buffer);
+            // display.display();
+
 
         }
         printf("SMDevice:onDataWrittenCallback: EXIT\r\n");
@@ -307,6 +397,9 @@ private:
 
 private:
     DigitalOut _led1;
+    uint8_t _receiveTotalLength; 
+    uint8_t _receiveTotalFragments;
+    uint8_t *_receiveBuffer;
 
 protected:
     BLE &_ble;

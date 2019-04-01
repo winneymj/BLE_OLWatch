@@ -36,13 +36,13 @@
             "label": "compile debug",
             "group": "build",
             "command": "mbed",
-            "args": ["compile", "--profile=debug", "-t", "GCC_ARM", "-m", "NRF52832_MDK", "--flash"]
+            "args": ["compile", "--profile=debug", "-t", "GCC_ARM", "-m", "NRF52832_MDK", "--flash", "-fexceptions"]
         },
         {
             "label": "compile develop",
             "group": "build",
             "command": "mbed",
-            "args": ["compile", "--profile=develop", "-t", "GCC_ARM", "-m", "NRF52832_MDK", "--flash"]
+            "args": ["compile", "--profile=develop", "-t", "GCC_ARM", "-m", "NRF52832_MDK", "--flash", "-fexceptions"]
         }
     ]
 }
