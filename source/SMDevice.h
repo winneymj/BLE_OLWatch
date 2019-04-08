@@ -22,7 +22,6 @@
 #include "LEDService.h"
 #include "Adafruit_GFX.h"
 #include "Adafruit_SSD1306.h"
-#include "utils/NotificationBuffer.h"
 
 /** This example demonstrates all the basic setup required
  *  for pairing and setting up link security both as a central and peripheral
@@ -65,7 +64,8 @@ public:
         _handle(0),
         _is_connecting(false),
         _receiveTotalLength(0),
-        _receiveBuffer(NULL) { };
+        _receiveBuffer(NULL),
+        _msgReceiptTimer(-1) { };
 
     virtual ~SMDevice()
     {
@@ -128,8 +128,6 @@ public:
         printf("SMDevice:pairingResult: ENTER\r\n");
         if (result == SecurityManager::SEC_STATUS_SUCCESS) {
             printf("Pairing successful\r\n");
-            // Clean down notification buffer
-            notificationBuffer.reset();
         } else {
             printf("Pairing failed\r\n");
         }
@@ -207,6 +205,12 @@ private:
                 memset(_receiveBuffer, 0, _receiveTotalLength + 1);
 
                 printf("onDataWrittenCallback:BT_TYPE_WRITE_SETUP:_receiveTotalLength=%d,_receiveTotalFragments=%d\r\n", _receiveTotalLength, _receiveTotalFragments);
+
+                // Setup a timer to wait for entire message.
+                // If the timer expires before entire message then abandon
+                // the buffer and reset for next.
+                _msgReceiptTimer = _event_queue.call_in(5000, this, &SMDevice::msgTimeout);
+
             } else if (BT_TYPE_WRITE_DIRECT == messageType) {
                 /*  Direct write message received.
                     Send payload to upper layer.
@@ -231,16 +235,28 @@ private:
                     // offset = (offset << 4) | (dataPtr[0] & 0x0F);
                     // block->setOffset(offset);
 
-                    printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:memcpy, offset=%d,payloadLength=%d\r\n", offset, payloadLength);
+                    printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:memcpy, offset=%d,payloadLength=%d\r\n", offset, (int)payloadLength);
 
                     // copy payload
                     memcpy(&_receiveBuffer[offset], (const void*)&dataPtr[3], payloadLength);
 
-                    printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:_receiveBuffer=%s\r\n", _receiveBuffer);
+                    
+                    printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:_receiveBuffer=%ls\r\n", _receiveBuffer);
                     /*  Full block received. No change in state.
                         Signal upper layer of write request.
                     */
                     // writeDoneHandler.call(block);
+
+                    // Count down fragments expected and when zero
+                    // and buffer has some data then make callback.
+                    if (_receiveTotalFragments > 0) {
+                        _receiveTotalFragments--;
+
+                        // If total is now 0 then we got all of the message
+                        // so cancel the timeout callback.
+                        _event_queue.cancel(_msgReceiptTimer);
+                        _msgReceiptTimer = -1;
+                    }
                 }                
             }
 
@@ -324,7 +340,7 @@ private:
 
         _ble.gattServer().onDataWritten(this, &SMDevice::onDataWrittenCallback);
         
-        bool initialValueForLEDCharacteristic = false;
+        // bool initialValueForLEDCharacteristic = false;
         // ledServicePtr = new LEDService(_ble, initialValueForLEDCharacteristic);
         ledServicePtr = new LEDService(_ble);
 
@@ -367,6 +383,16 @@ private:
         // printf("SMDevice:schedule_ble_events: EXIT\r\n");
     };
 
+    /** 
+     * Message has timed out, so we should start cleaning up and
+     * resetting for next message.
+     */
+    void msgTimeout(void)
+    {
+        printf("SMDevice:msgTimeout: ENTER\r\n");
+        printf("SMDevice:msgTimeout: EXIT\r\n");
+    }
+
     /** Blink LED to show we're running */
     void blink(void)
     {
@@ -400,6 +426,7 @@ private:
     uint8_t _receiveTotalLength; 
     uint8_t _receiveTotalFragments;
     uint8_t *_receiveBuffer;
+    int _msgReceiptTimer;
 
 protected:
     BLE &_ble;
