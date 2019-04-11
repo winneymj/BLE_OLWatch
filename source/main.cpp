@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <platform/SharedPtr.h>
 #include <events/mbed_events.h>
 #include <mbed.h>
 #include <PinNames.h>
@@ -40,9 +41,19 @@
 SPI mySPI(SPI_PSELMOSI0, NC, SPI_PSELSCK0, NC);
 // Adafruit_SSD1306_Spi *display;
 Adafruit_SSD1306_Spi display(mySPI, P0_16, P0_17, P0_14 , 128, 64);
+events::EventQueue globalQueue;
 
-int main()
-{
+void messageCallback(SharedPtr<uint8_t> bufferPtr) {
+    printf("messageCallback: ENTER\r\n");
+const char* ptr = (char*)bufferPtr.get();
+for (int x = 0; x < strlen(ptr); x++) {
+    printf("0x%X,", ptr[x]);
+}
+    printf("\r\n");
+    printf("messageCallback.bufferPtr.get()=%ls\r\n", bufferPtr.get());
+}
+
+int main() {
     printf("\r\n main: ENTER \r\n\r\n");
     mySPI.frequency(12000000);
 
@@ -59,7 +70,7 @@ int main()
 
     printf("h1\r\n");
     BLE& ble = BLE::Instance();
-    events::EventQueue queue;
+    // events::EventQueue queue;
 
     // display.begin(SSD1306_SWITCHCAPVCC);
     printf("h2\r\n");
@@ -69,7 +80,7 @@ int main()
 
     //  pc.printf("hahah");
     printf("\r\n PERIPHERAL \r\n\r\n");
-    SMDevicePeripheral peripheral(ble, queue);
+    SMDevicePeripheral peripheral(ble, globalQueue);
     peripheral.run();
 
     printf("\r\n main: EXIT \r\n\r\n");

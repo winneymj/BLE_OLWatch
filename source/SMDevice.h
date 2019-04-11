@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <platform/SharedPtr.h>
 #include <events/mbed_events.h>
 #include <mbed.h>
 #include <PinNames.h>
@@ -45,6 +46,7 @@ static const uint8_t DIRECT_WRITE_HEADER_SIZE = 0x03;
 LEDService *ledServicePtr;
 
 extern Adafruit_SSD1306_Spi display;
+extern void messageCallback(SharedPtr<uint8_t>);
 
 /** Base class for both peripheral and central. The same class that provides
  *  the logic for the application also implements the SecurityManagerEventHandler
@@ -169,9 +171,9 @@ private:
      */
     void onDataWrittenCallback(const GattWriteCallbackParams *params) {
         printf("SMDevice:onDataWrittenCallback: ENTER\r\n");
-        printf("SMDevice:onDataWrittenCallback: params->len=%d\r\n", params->len);
+        // printf("SMDevice:onDataWrittenCallback: params->len=%d\r\n", params->len);
         if ((params->handle == ledServicePtr->getValueHandle())) {
-            printf("GOT MATCH\r\n");
+            // printf("GOT MATCH\r\n");
             const uint8_t *dataPtr = params->data;
 
             // Get the message type
@@ -195,8 +197,8 @@ private:
                 _receiveTotalFragments = (_receiveTotalFragments << 8) | dataPtr[8];
                 _receiveTotalFragments = (_receiveTotalFragments << 8) | dataPtr[7];                
 
-                if (NULL == _receiveBuffer)
-                {
+                // Make sure to cleanup old buffer and allocate a new one.
+                if (NULL != _receiveBuffer) {
                     delete _receiveBuffer;
                 }
 
@@ -234,28 +236,38 @@ private:
                     offset = (offset << 8) | dataPtr[1];
                     // offset = (offset << 4) | (dataPtr[0] & 0x0F);
                     // block->setOffset(offset);
+                    _receiveTotalFragments--;
 
-                    printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:memcpy, offset=%d,payloadLength=%d\r\n", offset, (int)payloadLength);
+                    printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:memcpy, offset=%d,payloadLength=%d\r\n", (int)offset, (int)payloadLength);
 
                     // copy payload
                     memcpy(&_receiveBuffer[offset], (const void*)&dataPtr[3], payloadLength);
 
-                    
-                    printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:_receiveBuffer=%ls\r\n", _receiveBuffer);
-                    /*  Full block received. No change in state.
-                        Signal upper layer of write request.
-                    */
-                    // writeDoneHandler.call(block);
-
+for (int x = 0; x < _receiveTotalLength + 1; x++) {
+    printf("0x%X,", _receiveBuffer[x]);
+}
+    printf("\r\n");
                     // Count down fragments expected and when zero
                     // and buffer has some data then make callback.
-                    if (_receiveTotalFragments > 0) {
-                        _receiveTotalFragments--;
-
+                    // printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:_receiveTotalFragments=%d\r\n", _receiveTotalFragments);
+                    if (_receiveTotalFragments == 0) {
                         // If total is now 0 then we got all of the message
                         // so cancel the timeout callback.
+                        printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:_receiveBuffer=%s\r\n", _receiveBuffer);
                         _event_queue.cancel(_msgReceiptTimer);
                         _msgReceiptTimer = -1;
+
+// for (int x = 0; x < _receiveTotalLength + 1; x++) {
+//     printf("0x%X,", _receiveBuffer[x]);
+// }
+//     printf("\r\n");
+                        // Add callback to event queue
+                        // Create a char buffer to store and pass
+                        SharedPtr<uint8_t> bufferPtr((uint8_t *)malloc(_receiveTotalLength + 1));
+                        memcpy(bufferPtr.get(), _receiveBuffer, _receiveTotalLength + 1);
+
+                        Callback<void(SharedPtr<uint8_t>)> cb(messageCallback);
+                        _event_queue.call(cb, bufferPtr);
                     }
                 }                
             }
