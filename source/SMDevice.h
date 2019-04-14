@@ -43,6 +43,8 @@ static const uint8_t BT_TYPE_WRITE_SETUP = 0x00;
 static const uint8_t BT_TYPE_WRITE_DIRECT = 0x04;
 static const uint8_t DIRECT_WRITE_HEADER_SIZE = 0x03;
 
+#define MAX_BUFFER_SIZE 136
+
 // define the Serial object
 // Serial pc(USBTX, USBRX);
 LEDService *ledServicePtr;
@@ -196,14 +198,6 @@ private:
                 _receiveTotalLength = (_receiveTotalLength << 8) | dataPtr[2];
                 _receiveTotalLength = (_receiveTotalLength << 8) | dataPtr[1];
 
-                // // the offset of the current block with regards to the overall characteristic
-                // receiveLengthOffset = message[6];
-                // receiveLengthOffset = (receiveLengthOffset << 8) | message[5];
-                // receiveLengthOffset = (receiveLengthOffset << 8) | message[4];
-
-                // reset relation between absolute and relative fragment number
-                // receiveFragmentOffset = 0;
-
                 // fragments in block, number is send LSB
                 _receiveTotalFragments = dataPtr[9];
                 _receiveTotalFragments = (_receiveTotalFragments << 8) | dataPtr[8];
@@ -213,6 +207,13 @@ private:
                 if (NULL != _receiveBuffer) {
                     delete _receiveBuffer;
                 }
+
+printf("onDataWrittenCallback:before _receiveTotalLength=%d\r\n", _receiveTotalLength);
+                // Limit total size to MAX_BUFFER_SIZE
+                if (_receiveTotalLength > MAX_BUFFER_SIZE) {
+                    _receiveTotalLength = MAX_BUFFER_SIZE;
+                }
+printf("onDataWrittenCallback:after _receiveTotalLength=%d\r\n", _receiveTotalLength);
 
                 // Allocate buffer to store incoming message
                 _receiveBuffer = (uint8_t *)malloc(_receiveTotalLength + 1);
@@ -227,13 +228,8 @@ private:
                 _msgReceiptTimer = _event_queue.call_in(5000, this, &SMDevice::msgTimeout);
 
             } else if (BT_TYPE_WRITE_DIRECT == messageType) {
-                /*  Direct write message received.
-                    Send payload to upper layer.
-                */
-
                 // payload length
-                uint16_t payloadLength = params->len - DIRECT_WRITE_HEADER_SIZE;
-                // uint8_t* buffer = (uint8_t*) malloc(payloadLength);
+                int16_t payloadLength = params->len - DIRECT_WRITE_HEADER_SIZE;
 
 #ifdef DEBUG_OUTPUT
                 printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:payloadLength=%d\r\n", payloadLength);
@@ -245,17 +241,23 @@ private:
                     // SharedPointer<BlockStatic> block(new BlockDynamic(buffer, payloadLength));
 
                     // set offset of the current block with regards to the overall characteristic
-                    uint32_t offset;
+                    int32_t offset;
                     offset = dataPtr[2];
                     offset = (offset << 8) | dataPtr[1];
-                    // offset = (offset << 4) | (dataPtr[0] & 0x0F);
-                    // block->setOffset(offset);
+
                     _receiveTotalFragments--;
 
                     // printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:memcpy, offset=%d,payloadLength=%d\r\n", (int)offset, (int)payloadLength);
+                    // printf("onDataWrittenCallback:offset + payloadLength=%d\r\n", (int)offset + payloadLength);
 
-                    // copy payload
-                    memcpy(&_receiveBuffer[offset], (const void*)&dataPtr[3], payloadLength);
+                    // Make sure the payload fits in the buffer and thow away if not
+                    if ((offset + payloadLength) <= MAX_BUFFER_SIZE) {
+                        // copy payload
+                        printf("onDataWrittenCallback:COPY to [%d] len=%d\r\n", offset, payloadLength);
+                        memcpy(&_receiveBuffer[offset], (const void*)&dataPtr[3], payloadLength);
+                    } else {
+                        // printf("onDataWrittenCallback:THROW AWAY\r\n");
+                    }
 
 // for (int x = 0; x < _receiveTotalLength + 1; x++) {
 //     printf("0x%X,", _receiveBuffer[x]);
@@ -273,30 +275,25 @@ private:
                         _event_queue.cancel(_msgReceiptTimer);
                         _msgReceiptTimer = -1;
 
-// for (int x = 0; x < _receiveTotalLength + 1; x++) {
-//     printf("0x%X,", _receiveBuffer[x]);
-// }
-//     printf("\r\n");
+printf("onDataWrittenCallback:_receiveTotalLength=%d\r\n", _receiveTotalLength);
+for (int x = 0; x < _receiveTotalLength + 1; x++) {
+    printf("0x%X,", _receiveBuffer[x]);
+}
+printf("done\r\n");
                         // Add callback to event queue
                         // Create a char buffer to store and pass
                         SharedPtr<uint8_t> bufferPtr((uint8_t *)malloc(_receiveTotalLength + 1));
-                        memcpy(bufferPtr.get(), _receiveBuffer, _receiveTotalLength + 1);
+printf("done2\r\n");
+                        memcpy(bufferPtr.get(), _receiveBuffer, _receiveTotalLength);
+printf("done3\r\n");
+                        bufferPtr.get()[_receiveTotalLength] = 0; // Null last byte
+printf("done4\r\n");
 
                         Callback<void(SharedPtr<uint8_t>)> cb(messageCallback);
                         _event_queue.call(cb, bufferPtr);
                     }
                 }                
             }
-
-            // // printf("onDataWrittenCallback:%s\r\n", buffer);
-            // // display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
-            // display.setTextSize(1);             // Normal 1:1 pixel scale
-            // display.setTextColour(WHITE);        // Draw white text
-            // display.setCursor(0, row * 10);             // Start at top-left corner
-            // display.printf(buffer);
-            // display.display();
-
-
         }
 #ifdef DEBUG_OUTPUT
         printf("SMDevice:onDataWrittenCallback: EXIT\r\n");
@@ -440,8 +437,8 @@ private:
 
 private:
     DigitalOut _led1;
-    uint8_t _receiveTotalLength; 
-    uint8_t _receiveTotalFragments;
+    uint16_t _receiveTotalLength; 
+    uint16_t _receiveTotalFragments;
     uint8_t *_receiveBuffer;
     int _msgReceiptTimer;
 

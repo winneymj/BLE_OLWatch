@@ -3,7 +3,8 @@
 
 #include <mbed.h>
 
-static int convArray[][2] = {{0xE28099, '\''}};
+static int convArray[][2] = {   {0xE28099, '\''},
+                                {0xC2B0, ' '}};
 
 class DataFormat {
 public:
@@ -14,6 +15,7 @@ public:
             int startPos = 0;
             // printf("utf8ToAscii:i=%d\n", i);
             int seqLen = sequence_length(src[i]);
+            // printf("utf8ToAscii:seqLen=%d\n", seqLen);
             if (seqLen == 1) { // Nothing to do just leave alone
                 continue;
             } else if (seqLen > 1) {
@@ -79,6 +81,7 @@ private:
             }
         }
         
+        printf("findASCII:FAILED %d\n", src);
         return '?';
     }
 };

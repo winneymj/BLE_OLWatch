@@ -17,6 +17,7 @@
 #include <platform/SharedPtr.h>
 #include <events/mbed_events.h>
 #include <mbed.h>
+#include <platform/CircularBuffer.h>
 #include <PinNames.h>
 #include "ble/BLE.h"
 #include "SecurityManager.h"
@@ -43,9 +44,18 @@ SPI mySPI(SPI_PSELMOSI0, NC, SPI_PSELSCK0, NC);
 // Adafruit_SSD1306_Spi *display;
 Adafruit_SSD1306_Spi display(mySPI, P0_16, P0_17, P0_14 , 128, 64);
 events::EventQueue globalQueue;
+// Circular buffer to hold history or messages
+#define BUF_SIZE 10
+CircularBuffer<SharedPtr<uint8_t>, BUF_SIZE> buf;
 
 void messageCallback(SharedPtr<uint8_t> bufferPtr) {
-    // printf("messageCallback: ENTER\r\n");
+    // Make sure UTF8 chars are convertes as best as possible to ASCII
+    DataFormat::utf8ToAscii(bufferPtr.get());
+
+    // Push to circular buffer
+    buf.push(bufferPtr);
+
+// printf("messageCallback: ENTER\r\n");
 // const char* ptr = (char*)bufferPtr.get();
 // for (int x = 0; x < strlen(ptr); x++) {
 //     printf("0x%X,", ptr[x]);
@@ -57,8 +67,7 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
 // }
 // printf("\r\n");
 // printf("onDataWrittenCallback:%s\r\n", buffer);
-// display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
-    DataFormat::utf8ToAscii(bufferPtr.get());
+    display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
     display.setTextSize(1);             // Normal 1:1 pixel scale
     display.setTextColour(WHITE);        // Draw white text
     display.setCursor(0, 10);             // Start at top-left corner
@@ -66,8 +75,7 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
     display.display();
 
     printf("messageCallback.bufferPtr.get()=%ls\r\n", bufferPtr.get());
-
-// convert the string
+    printf("messageCallback.circular buf.size()=%d\r\n", buf.size());
 }
 
 int main() {
