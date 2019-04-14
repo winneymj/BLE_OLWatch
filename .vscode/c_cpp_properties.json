@@ -288,7 +288,9 @@
                 "${workspaceFolder}/mbed-os/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_SDK_14_2/libraries/queue",
                 "${workspaceFolder}/mbed-os/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_SDK_14_2/libraries/strerror",
                 "${workspaceFolder}/mbed-os/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_SDK_14_2/libraries/util",
-                "${workspaceFolder}/source"            ],
+                "${workspaceFolder}/source",
+                "${workspaceFolder}/source/utils"
+            ],
             "name": "Windows",
             "defines": [
                 "TARGET_MCU_NRF52832",

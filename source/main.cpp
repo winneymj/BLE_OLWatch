@@ -24,6 +24,7 @@
 #include "SMDevice.h"
 #include "Adafruit_GFX.h"
 #include "Adafruit_SSD1306.h"
+#include "dataFormat.h"
 
 /** This example demonstrates all the basic setup required
  *  for pairing and setting up link security both as a central and peripheral
@@ -44,17 +45,34 @@ Adafruit_SSD1306_Spi display(mySPI, P0_16, P0_17, P0_14 , 128, 64);
 events::EventQueue globalQueue;
 
 void messageCallback(SharedPtr<uint8_t> bufferPtr) {
-    printf("messageCallback: ENTER\r\n");
-const char* ptr = (char*)bufferPtr.get();
-for (int x = 0; x < strlen(ptr); x++) {
-    printf("0x%X,", ptr[x]);
-}
-    printf("\r\n");
+    // printf("messageCallback: ENTER\r\n");
+// const char* ptr = (char*)bufferPtr.get();
+// for (int x = 0; x < strlen(ptr); x++) {
+//     printf("0x%X,", ptr[x]);
+// }
+// char *pToFill = new char[strlen((char*)bufferPtr.get()) + 1];
+// if (wcstombs(pToFill, (wchar_t*)bufferPtr.get(), strlen((char*)bufferPtr.get())) == -1)
+// {
+//     printf("messageCallback:wcstombs failed!\r\n");
+// }
+// printf("\r\n");
+// printf("onDataWrittenCallback:%s\r\n", buffer);
+// display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
+    DataFormat::utf8ToAscii(bufferPtr.get());
+    display.setTextSize(1);             // Normal 1:1 pixel scale
+    display.setTextColour(WHITE);        // Draw white text
+    display.setCursor(0, 10);             // Start at top-left corner
+    display.printf((char*)bufferPtr.get());
+    display.display();
+
     printf("messageCallback.bufferPtr.get()=%ls\r\n", bufferPtr.get());
+
+// convert the string
 }
 
 int main() {
     printf("\r\n main: ENTER \r\n\r\n");
+
     mySPI.frequency(12000000);
 
     // Show initial display buffer contents on the screen --

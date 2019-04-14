@@ -35,6 +35,8 @@
  *  progress.
  */
 
+// #define DEBUG_OUTPUT
+
 static const uint8_t DEVICE_NAME[] = "SM_device";
 static const uint16_t uuid16_list[] = {LEDService::LED_SERVICE_UUID};
 static const uint8_t BT_TYPE_WRITE_SETUP = 0x00;
@@ -79,7 +81,9 @@ public:
     /** Start BLE interface initialisation */
     void run()
     {
+#ifdef DEBUG_OUTPUT
         printf("SMDevice:run: ENTER\r\n");
+#endif
 
         ble_error_t error;
 
@@ -107,7 +111,9 @@ public:
         /* this will not return until shutdown */
         _event_queue.dispatch_forever();
 
+#ifdef DEBUG_OUTPUT
         printf("SMDevice:run: EXIT\r\n");
+#endif
     };
 
     /* event handler functions */
@@ -118,7 +124,9 @@ public:
     virtual void pairingRequest(
         ble::connection_handle_t connectionHandle
     ) {
+#ifdef DEBUG_OUTPUT
         printf("Pairing requested. Authorising.\r\n");
+#endif
         _ble.securityManager().acceptPairingRequest(connectionHandle);
     }
 
@@ -127,19 +135,20 @@ public:
         ble::connection_handle_t connectionHandle,
         SecurityManager::SecurityCompletionStatus_t result
     ) {
+#ifdef DEBUG_OUTPUT
         printf("SMDevice:pairingResult: ENTER\r\n");
         if (result == SecurityManager::SEC_STATUS_SUCCESS) {
             printf("Pairing successful\r\n");
         } else {
             printf("Pairing failed\r\n");
         }
-
         // /* disconnect in 500 ms */
         // _event_queue.call_in(
         //     500, &_ble.gap(),
         //     &Gap::disconnect, _handle, Gap::REMOTE_USER_TERMINATED_CONNECTION
         // );
         printf("SMDevice:pairingResult: EXIT\r\n");
+#endif
     }
 
     /** Inform the application of change in encryption status. This will be
@@ -148,6 +157,7 @@ public:
         ble::connection_handle_t connectionHandle,
         ble::link_encryption_t result
     ) {
+#ifdef DEBUG_OUTPUT
         printf("SMDevice:linkEncryptionResult: ENTER\r\n");
         if (result == ble::link_encryption_t::ENCRYPTED) {
             printf("Link ENCRYPTED\r\n");
@@ -157,6 +167,7 @@ public:
             printf("Link NOT_ENCRYPTED\r\n");
         }
         printf("SMDevice:linkEncryptionResult: EXIT\r\n");
+#endif
     }
 
 private:
@@ -170,10 +181,11 @@ private:
      *     Information about the characterisitc being updated.
      */
     void onDataWrittenCallback(const GattWriteCallbackParams *params) {
+#ifdef DEBUG_OUTPUT
         printf("SMDevice:onDataWrittenCallback: ENTER\r\n");
-        // printf("SMDevice:onDataWrittenCallback: params->len=%d\r\n", params->len);
+        printf("SMDevice:onDataWrittenCallback: params->len=%d\r\n", params->len);
+#endif
         if ((params->handle == ledServicePtr->getValueHandle())) {
-            // printf("GOT MATCH\r\n");
             const uint8_t *dataPtr = params->data;
 
             // Get the message type
@@ -206,8 +218,9 @@ private:
                 _receiveBuffer = (uint8_t *)malloc(_receiveTotalLength + 1);
                 memset(_receiveBuffer, 0, _receiveTotalLength + 1);
 
+#ifdef DEBUG_OUTPUT
                 printf("onDataWrittenCallback:BT_TYPE_WRITE_SETUP:_receiveTotalLength=%d,_receiveTotalFragments=%d\r\n", _receiveTotalLength, _receiveTotalFragments);
-
+#endif
                 // Setup a timer to wait for entire message.
                 // If the timer expires before entire message then abandon
                 // the buffer and reset for next.
@@ -222,8 +235,9 @@ private:
                 uint16_t payloadLength = params->len - DIRECT_WRITE_HEADER_SIZE;
                 // uint8_t* buffer = (uint8_t*) malloc(payloadLength);
 
+#ifdef DEBUG_OUTPUT
                 printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:payloadLength=%d\r\n", payloadLength);
-
+#endif
                 // only continue if allocation was successful
                 if (NULL != _receiveBuffer)
                 {
@@ -238,22 +252,24 @@ private:
                     // block->setOffset(offset);
                     _receiveTotalFragments--;
 
-                    printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:memcpy, offset=%d,payloadLength=%d\r\n", (int)offset, (int)payloadLength);
+                    // printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:memcpy, offset=%d,payloadLength=%d\r\n", (int)offset, (int)payloadLength);
 
                     // copy payload
                     memcpy(&_receiveBuffer[offset], (const void*)&dataPtr[3], payloadLength);
 
-for (int x = 0; x < _receiveTotalLength + 1; x++) {
-    printf("0x%X,", _receiveBuffer[x]);
-}
-    printf("\r\n");
+// for (int x = 0; x < _receiveTotalLength + 1; x++) {
+//     printf("0x%X,", _receiveBuffer[x]);
+// }
+//     printf("\r\n");
                     // Count down fragments expected and when zero
                     // and buffer has some data then make callback.
                     // printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:_receiveTotalFragments=%d\r\n", _receiveTotalFragments);
                     if (_receiveTotalFragments == 0) {
                         // If total is now 0 then we got all of the message
                         // so cancel the timeout callback.
+#ifdef DEBUG_OUTPUT
                         printf("onDataWrittenCallback:BT_TYPE_WRITE_DIRECT:_receiveBuffer=%s\r\n", _receiveBuffer);
+#endif
                         _event_queue.cancel(_msgReceiptTimer);
                         _msgReceiptTimer = -1;
 
@@ -272,32 +288,6 @@ for (int x = 0; x < _receiveTotalLength + 1; x++) {
                 }                
             }
 
-            // char buffer[240] = {0};
-            // std::strncpy(buffer, (char *)params->data, params->len);
-
-            // // Push to buffer for later processing.
-            // notificationBuffer.push(buffer);
-
-            // printf("onDataWrittenCallback:push:%s,len=%d\r\n", buffer, notificationBuffer.size());
-
-            // // Null down after 1st character
-            // // 1st character could be a row number, pull it off
-            // buffer[1] = '\0';
-            // // Convert to a number
-            // int row = std::atoi(buffer);
-            // printf("row=%d,", row);
-
-            // // Check for end of message and add processing
-            // // to queue.
-            // if (row == 9) {
-            //     _event_queue.call(NotificationBufferHelper::processBuffer);
-            // }
-            // // std::strncpy(buffer, (char *)params->data, params->len);
-            // // for (int x = 0; x < params->len; x++)
-            // // {
-            // //     printf("0x%X,", params->data[x]);
-            // // }
-            
             // // printf("onDataWrittenCallback:%s\r\n", buffer);
             // // display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
             // display.setTextSize(1);             // Normal 1:1 pixel scale
@@ -308,13 +298,17 @@ for (int x = 0; x < _receiveTotalLength + 1; x++) {
 
 
         }
+#ifdef DEBUG_OUTPUT
         printf("SMDevice:onDataWrittenCallback: EXIT\r\n");
+#endif
     }
 
     /** This is called when BLE interface is initialised and starts the demonstration */
     void on_init_complete(BLE::InitializationCompleteCallbackContext *event)
     {
+#ifdef DEBUG_OUTPUT
         printf("SMDevice:on_init_complete: ENTER\r\n");
+#endif
         ble_error_t error;
 
         if (event->error) {
@@ -359,7 +353,9 @@ for (int x = 0; x < _receiveTotalLength + 1; x++) {
         /* start test in 500 ms */
         _event_queue.call_in(500, this, &SMDevice::start);
 
+#ifdef DEBUG_OUTPUT
         printf("SMDevice:on_init_complete: EXIT\r\n");
+#endif
     };
 
     /** This is called by Gap to notify the application we connected */
@@ -369,22 +365,28 @@ for (int x = 0; x < _receiveTotalLength + 1; x++) {
      *  in our case it ends the demonstration. */
     void on_disconnect(const Gap::DisconnectionCallbackParams_t *event)
     {
+#ifdef DEBUG_OUTPUT
         printf("SMDevice:on_disconnect: ENTER\r\n");
         printf("SMDevice:on_disconnect: Reason=0x%X\r\n", event->reason);
+#endif
         // printf("Disconnected - demonstration ended \r\n");
         // _event_queue.break_dispatch();
         BLE::Instance().gap().startAdvertising();
+#ifdef DEBUG_OUTPUT
         printf("SMDevice:on_disconnect: EXIT\r\n");
+#endif
     };
 
     /** End demonstration unexpectedly. Called if timeout is reached during advertising,
      * scanning or connection initiation */
     void on_timeout(const Gap::TimeoutSource_t source)
     {
+#ifdef DEBUG_OUTPUT
         printf("SMDevice:on_timeout: ENTER\r\n");
         printf("Unexpected timeout - aborting \r\n");
         // _event_queue.break_dispatch();
         printf("SMDevice:on_timeout: EXIT\r\n");
+#endif
     };
 
     /** Schedule processing of events from the BLE in the event queue. */
@@ -401,16 +403,19 @@ for (int x = 0; x < _receiveTotalLength + 1; x++) {
      */
     void msgTimeout(void)
     {
+#ifdef DEBUG_OUTPUT
         printf("SMDevice:msgTimeout: ENTER\r\n");
         printf("SMDevice:msgTimeout: EXIT\r\n");
+#endif
     }
 
     /** Blink LED to show we're running */
     void blink(void)
     {
         Gap::GapState_t gapState = _ble.gap().getState();
+#ifdef DEBUG_OUTPUT
         printf("Gap State:Advertising=%s, connected=%s\r\n", gapState.advertising ? "On" : "Off", gapState.connected ? "Yes" : "No");
-
+#endif
         // Solid led if advertising
         if (gapState.advertising) {
             display.fillCircle(8, 5, 5, WHITE);
@@ -456,7 +461,9 @@ public:
 
     virtual void start()
     {
+#ifdef DEBUG_OUTPUT
         printf("SMDevicePeripheral:start: ENTER\r\n");
+#endif
         /* Set up and start advertising */
 
         ble_error_t error;
@@ -497,14 +504,18 @@ public:
          * pairing. */
         _ble.securityManager().setPairingRequestAuthorisation(true);
 
+#ifdef DEBUG_OUTPUT
         printf("SMDevicePeripheral:start: EXIT\r\n");
+#endif
     };
 
     /** This is called by Gap to notify the application we connected,
      *  in our case it immediately requests a change in link security */
     virtual void on_connect(const Gap::ConnectionCallbackParams_t *connection_event)
     {
+#ifdef DEBUG_OUTPUT
         printf("SMDevicePeripheral:on_connect: ENTER\r\n");
+#endif
         ble_error_t error;
 
         /* store the handle for future Security Manager requests */
@@ -524,6 +535,8 @@ public:
             printf("Error during SM::setLinkSecurity %d\r\n", error);
             return;
         }
+#ifdef DEBUG_OUTPUT
         printf("SMDevicePeripheral:on_connect: EXIT\r\n");
+#endif
     };
 };
