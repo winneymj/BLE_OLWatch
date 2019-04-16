@@ -70,7 +70,7 @@ public:
         _handle(0),
         _is_connecting(false),
         _receiveTotalLength(0),
-        _receiveBuffer(NULL),
+        _receiveBuffer(SharedPtr<uint8_t>(new uint8_t[MAX_BUFFER_SIZE + 1])),
         _msgReceiptTimer(-1) { };
 
     virtual ~SMDevice()
@@ -203,21 +203,15 @@ private:
                 _receiveTotalFragments = (_receiveTotalFragments << 8) | dataPtr[8];
                 _receiveTotalFragments = (_receiveTotalFragments << 8) | dataPtr[7];                
 
-                // Make sure to cleanup old buffer and allocate a new one.
-                if (NULL != _receiveBuffer) {
-                    delete _receiveBuffer;
-                }
-
-printf("onDataWrittenCallback:before _receiveTotalLength=%d\r\n", _receiveTotalLength);
+// printf("onDataWrittenCallback:before _receiveTotalLength=%d\r\n", _receiveTotalLength);
                 // Limit total size to MAX_BUFFER_SIZE
                 if (_receiveTotalLength > MAX_BUFFER_SIZE) {
                     _receiveTotalLength = MAX_BUFFER_SIZE;
                 }
-printf("onDataWrittenCallback:after _receiveTotalLength=%d\r\n", _receiveTotalLength);
+// printf("onDataWrittenCallback:after _receiveTotalLength=%d\r\n", _receiveTotalLength);
 
-                // Allocate buffer to store incoming message
-                _receiveBuffer = (uint8_t *)malloc(_receiveTotalLength + 1);
-                memset(_receiveBuffer, 0, _receiveTotalLength + 1);
+                // // Clear down buffer to null
+                memset(_receiveBuffer.get(), 0, _receiveTotalLength + 1);
 
 #ifdef DEBUG_OUTPUT
                 printf("onDataWrittenCallback:BT_TYPE_WRITE_SETUP:_receiveTotalLength=%d,_receiveTotalFragments=%d\r\n", _receiveTotalLength, _receiveTotalFragments);
@@ -253,8 +247,8 @@ printf("onDataWrittenCallback:after _receiveTotalLength=%d\r\n", _receiveTotalLe
                     // Make sure the payload fits in the buffer and thow away if not
                     if ((offset + payloadLength) <= MAX_BUFFER_SIZE) {
                         // copy payload
-                        printf("onDataWrittenCallback:COPY to [%d] len=%d\r\n", offset, payloadLength);
-                        memcpy(&_receiveBuffer[offset], (const void*)&dataPtr[3], payloadLength);
+                        // printf("onDataWrittenCallback:COPY to [%d] len=%d\r\n", offset, payloadLength);
+                        memcpy(&_receiveBuffer.get()[offset], (const void*)&dataPtr[3], payloadLength);
                     } else {
                         // printf("onDataWrittenCallback:THROW AWAY\r\n");
                     }
@@ -275,19 +269,16 @@ printf("onDataWrittenCallback:after _receiveTotalLength=%d\r\n", _receiveTotalLe
                         _event_queue.cancel(_msgReceiptTimer);
                         _msgReceiptTimer = -1;
 
-printf("onDataWrittenCallback:_receiveTotalLength=%d\r\n", _receiveTotalLength);
-for (int x = 0; x < _receiveTotalLength + 1; x++) {
-    printf("0x%X,", _receiveBuffer[x]);
-}
-printf("done\r\n");
+// printf("onDataWrittenCallback:_receiveTotalLength=%d\r\n", _receiveTotalLength);
+// for (int x = 0; x < _receiveTotalLength + 1; x++) {
+//     printf("0x%X,", _receiveBuffer[x]);
+// }
+// printf("\r\n");
                         // Add callback to event queue
                         // Create a char buffer to store and pass
                         SharedPtr<uint8_t> bufferPtr((uint8_t *)malloc(_receiveTotalLength + 1));
-printf("done2\r\n");
-                        memcpy(bufferPtr.get(), _receiveBuffer, _receiveTotalLength);
-printf("done3\r\n");
+                        memcpy(bufferPtr.get(), _receiveBuffer.get(), _receiveTotalLength);
                         bufferPtr.get()[_receiveTotalLength] = 0; // Null last byte
-printf("done4\r\n");
 
                         Callback<void(SharedPtr<uint8_t>)> cb(messageCallback);
                         _event_queue.call(cb, bufferPtr);
@@ -439,7 +430,8 @@ private:
     DigitalOut _led1;
     uint16_t _receiveTotalLength; 
     uint16_t _receiveTotalFragments;
-    uint8_t *_receiveBuffer;
+    // uint8_t *_receiveBuffer;
+    SharedPtr<uint8_t> _receiveBuffer;
     int _msgReceiptTimer;
 
 protected:

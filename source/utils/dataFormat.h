@@ -2,15 +2,25 @@
 #define __DATAFORMAT_H__
 
 #include <mbed.h>
+#include <platform/SharedPtr.h>
 
 static int convArray[][2] = {   {0xE28099, '\''},
                                 {0xC2B0, ' '}};
 
+typedef struct messageData {
+    time_t time;
+    SharedPtr<char> sender;
+    SharedPtr<char> from;
+    SharedPtr<char> subject;
+    SharedPtr<char> body;
+} MessageData;
+
 class DataFormat {
 public:
-    static void utf8ToAscii(uint8_t* src) {
+    static void utf8ToAscii(SharedPtr<uint8_t> bufferPtr) {
+        char *src = (char*)bufferPtr.get();
         // printf("utf8ToAscii:src=%s\n", src);
-        int srcLen = strlen((char*)src);
+        int srcLen = strlen(src);
         for (int i = 0; i < srcLen; i++) {
             int startPos = 0;
             // printf("utf8ToAscii:i=%d\n", i);
@@ -44,6 +54,49 @@ public:
         //     printf("0x%X,", src[i]);
         // }
         // printf("\n");
+    }
+
+    static SharedPtr<MessageData> parseNotification(SharedPtr<uint8_t> bufferPtr) {
+        char* token = strtok((char*)bufferPtr.get(), "|" );
+        SharedPtr<MessageData> retMsg = NULL;
+        if (NULL != token) {
+            retMsg = SharedPtr<MessageData>(new MessageData);
+            // if first token then sender
+            printf("parseNotification:sender=%s\r\n", token);
+            retMsg->sender = SharedPtr<char>(new char[strlen(token) + 1]);
+            strcpy(retMsg->sender.get(), token);
+
+            token = strtok(NULL, "|" );
+        }
+        if (NULL != token) {
+            // if second token then from
+            printf("parseNotification:from=%s\r\n", token);
+            retMsg->from = SharedPtr<char>(new char[strlen(token) + 1]);
+            strcpy(retMsg->from.get(), token);
+
+            token = strtok(NULL, "|" );
+        }
+        if (NULL != token) {
+            // if third token then subject
+            printf("parseNotification:subject=%s, len=%d\r\n", token, strlen(token));
+            retMsg->subject = SharedPtr<char>(new char[strlen(token) + 1]);
+            strcpy(retMsg->subject.get(), token);
+
+            token = strtok(NULL, "|" );
+        }
+        if (NULL != token) {
+            // if forth token then body
+            printf("parseNotification:body=%s, len=%d\r\n", token, strlen(token));
+            retMsg->body = SharedPtr<char>(new char[strlen(token) + 1]);
+            strcpy(retMsg->body.get(), token);
+        }
+
+        printf("parseNotification:retMsg->sender=%s\r\n", retMsg->sender.get());
+        printf("parseNotification:retMsg->from=%s\r\n", retMsg->from.get());
+        printf("parseNotification:retMsg->subject=%s\r\n", retMsg->subject.get());
+        printf("parseNotification:retMsg->body=%s\r\n", retMsg->body.get());
+
+        return retMsg;
     }
 
 private:
@@ -84,6 +137,7 @@ private:
         printf("findASCII:FAILED %d\n", src);
         return '?';
     }
+
 };
 
 #endif // __DATAFORMAT_H__

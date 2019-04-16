@@ -46,36 +46,28 @@ Adafruit_SSD1306_Spi display(mySPI, P0_16, P0_17, P0_14 , 128, 64);
 events::EventQueue globalQueue;
 // Circular buffer to hold history or messages
 #define BUF_SIZE 10
-CircularBuffer<SharedPtr<uint8_t>, BUF_SIZE> buf;
+CircularBuffer<SharedPtr<MessageData>, BUF_SIZE> buf;
 
 void messageCallback(SharedPtr<uint8_t> bufferPtr) {
+    // printf("messageCallback: ENTER, bufferPtr=%s\r\n", bufferPtr.get());
     // Make sure UTF8 chars are convertes as best as possible to ASCII
-    DataFormat::utf8ToAscii(bufferPtr.get());
+    DataFormat::utf8ToAscii(bufferPtr);
+
+    // Parse out the sender etc and return structure
+    SharedPtr<MessageData> msgData = DataFormat::parseNotification(bufferPtr);
 
     // Push to circular buffer
-    buf.push(bufferPtr);
+    buf.push(msgData);
 
-// printf("messageCallback: ENTER\r\n");
-// const char* ptr = (char*)bufferPtr.get();
-// for (int x = 0; x < strlen(ptr); x++) {
-//     printf("0x%X,", ptr[x]);
-// }
-// char *pToFill = new char[strlen((char*)bufferPtr.get()) + 1];
-// if (wcstombs(pToFill, (wchar_t*)bufferPtr.get(), strlen((char*)bufferPtr.get())) == -1)
-// {
-//     printf("messageCallback:wcstombs failed!\r\n");
-// }
-// printf("\r\n");
-// printf("onDataWrittenCallback:%s\r\n", buffer);
     display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
     display.setTextSize(1);             // Normal 1:1 pixel scale
     display.setTextColour(WHITE);        // Draw white text
     display.setCursor(0, 10);             // Start at top-left corner
-    display.printf((char*)bufferPtr.get());
+    display.printf(msgData->subject.get());
     display.display();
 
     printf("messageCallback.bufferPtr.get()=%ls\r\n", bufferPtr.get());
-    printf("messageCallback.circular buf.size()=%d\r\n", buf.size());
+    // printf("messageCallback.circular buf.size()=%d\r\n", buf.size());
 }
 
 int main() {
