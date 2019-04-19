@@ -17,7 +17,6 @@
 #include <platform/SharedPtr.h>
 #include <events/mbed_events.h>
 #include <mbed.h>
-#include <platform/CircularBuffer.h>
 #include <PinNames.h>
 #include "ble/BLE.h"
 #include "SecurityManager.h"
@@ -26,6 +25,9 @@
 #include "Adafruit_GFX.h"
 #include "Adafruit_SSD1306.h"
 #include "dataFormat.h"
+#include "typedefs.h"
+#include "CircBuffer.h"
+#include "notification.h"
 
 /** This example demonstrates all the basic setup required
  *  for pairing and setting up link security both as a central and peripheral
@@ -45,8 +47,8 @@ SPI mySPI(SPI_PSELMOSI0, NC, SPI_PSELSCK0, NC);
 Adafruit_SSD1306_Spi display(mySPI, P0_16, P0_17, P0_14 , 128, 64);
 events::EventQueue globalQueue;
 // Circular buffer to hold history or messages
-#define BUF_SIZE 10
-CircularBuffer<SharedPtr<MessageData>, BUF_SIZE> buf;
+NotificationBuffer buf;
+Notification notificationDisplay(buf, display);
 
 void messageCallback(SharedPtr<uint8_t> bufferPtr) {
     // printf("messageCallback: ENTER, bufferPtr=%s\r\n", bufferPtr.get());
@@ -86,12 +88,10 @@ int main() {
     // mySPI.frequency(1000000);
     // display = new Adafruit_SSD1306_Spi(mySPI, P0_16, P0_17, P0_14 , 128, 64);
 
-    printf("h1\r\n");
     BLE& ble = BLE::Instance();
     // events::EventQueue queue;
 
     // display.begin(SSD1306_SWITCHCAPVCC);
-    printf("h2\r\n");
     // display.drawLine(1, 1, 127, 63, WHITE);
     // display.drawRect(1, 1, 127, 7, WHITE);
     // display.display();

@@ -3,17 +3,10 @@
 
 #include <mbed.h>
 #include <platform/SharedPtr.h>
+#include "typedefs.h"
 
 static int convArray[][2] = {   {0xE28099, '\''},
                                 {0xC2B0, ' '}};
-
-typedef struct messageData {
-    time_t time;
-    SharedPtr<char> sender;
-    SharedPtr<char> from;
-    SharedPtr<char> subject;
-    SharedPtr<char> body;
-} MessageData;
 
 class DataFormat {
 public:
