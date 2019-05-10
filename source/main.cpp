@@ -47,8 +47,13 @@ SPI mySPI(SPI_PSELMOSI0, NC, SPI_PSELSCK0, NC);
 Adafruit_SSD1306_Spi display(mySPI, P0_16, P0_17, P0_14 , 128, 64);
 events::EventQueue globalQueue;
 // Circular buffer to hold history or messages
-NotificationBuffer buf;
-Notification notificationDisplay(buf, display);
+NotificationBuffer notificationBuffer;
+Notification notificationDisplay(notificationBuffer, display);
+
+// Button Interrupts
+InterruptIn button1(P0_11);
+
+int savedClearDown = -1;
 
 void messageCallback(SharedPtr<uint8_t> bufferPtr) {
     // printf("messageCallback: ENTER, bufferPtr=%s\r\n", bufferPtr.get());
@@ -59,7 +64,7 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
     SharedPtr<MessageData> msgData = DataFormat::parseNotification(bufferPtr);
 
     // Push to circular buffer
-    buf.push(msgData);
+    notificationBuffer.push(msgData);
 
     display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
     display.setTextSize(1);             // Normal 1:1 pixel scale
@@ -69,13 +74,45 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
     display.display();
 
     printf("messageCallback.bufferPtr.get()=%ls\r\n", bufferPtr.get());
-    // printf("messageCallback.circular buf.size()=%d\r\n", buf.size());
+    // Dump buffer
+    NotificationBuffer::iterator_t iterator;
+    SharedPtr<MessageData> msgData2;
+    if (MBED_SUCCESS == notificationBuffer.iterator_open(&iterator)) {
+
+        while (notificationBuffer.iterator_next(iterator, msgData2)) {
+            printf("msgData->subject%s\r\n", msgData2->subject.get());
+        }
+    }
+}
+
+void testClearDownTimerCallback() {
+    savedClearDown = -1;
+    display.clearDisplay();
+}
+
+void button1Trigger() {
+    // If multiple clicks do not and the clear down
+    // has not run then cancel the clear down.
+    if (savedClearDown != -1) {
+        globalQueue.cancel(savedClearDown);
+    }
+    globalQueue.call(callback(&notificationDisplay, &Notification::scrollUp));
+    savedClearDown = globalQueue.call_in(5000, callback(&testClearDownTimerCallback));
+}
+
+void setupButtonCallbacks() {
+    button1.fall(callback(&button1Trigger));
+    button1.mode(PullUp);
+    button1.enable_irq();
 }
 
 int main() {
     printf("\r\n main: ENTER \r\n\r\n");
 
     mySPI.frequency(12000000);
+
+    // Setup buttons
+    setupButtonCallbacks();
 
     // Show initial display buffer contents on the screen --
     // the library initializes this with an Adafruit splash screen.

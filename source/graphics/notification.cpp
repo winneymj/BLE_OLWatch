@@ -31,7 +31,17 @@ void Notification::display() {
 }
 
 void Notification::scrollUp() {
+    printf("scrollUp: ENTER\r\n");
 
+    _display.clearDisplay();
+    _display.setTextSize(_textSize);            // Normal 1:1 pixel scale
+    _display.setTextColour(_textColour);        // Draw white text
+    _display.setCursor(0, 10);             // Start at top-left corner
+
+    // See if any notifications and display "No Notifications" if none.
+    if (_notificationBuffer.empty()) {
+        _display.printf("No Notifications");
+    }
 }
 
 void Notification::scrollDown() {
