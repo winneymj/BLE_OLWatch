@@ -74,15 +74,17 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
     display.display();
 
     printf("messageCallback.bufferPtr.get()=%ls\r\n", bufferPtr.get());
+    printf("notificationBuffer.size=%d\r\n", notificationBuffer.size());
     // Dump buffer
     NotificationBuffer::iterator_t iterator;
     SharedPtr<MessageData> msgData2;
-    if (MBED_SUCCESS == notificationBuffer.iterator_open(&iterator)) {
 
-        while (notificationBuffer.iterator_next(iterator, msgData2)) {
-            printf("msgData->subject%s\r\n", msgData2->subject.get());
+    if (MBED_SUCCESS == notificationBuffer.iterator_open(&iterator)) {
+        while (MBED_SUCCESS == notificationBuffer.iterator_next(iterator, msgData2)) {
+            printf("msgData->subject=%s\r\n", msgData2->subject.get());
         }
     }
+    notificationBuffer.iterator_close(iterator);
 }
 
 void testClearDownTimerCallback() {
