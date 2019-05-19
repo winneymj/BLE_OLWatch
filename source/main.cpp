@@ -55,6 +55,14 @@ InterruptIn button1(P0_11);
 
 int savedClearDown = -1;
 
+void testClearDownTimerCallback() {
+    printf("testClearDownTimerCallback: ENTER\r\n");
+    savedClearDown = -1;
+    // Close the Notification display
+    globalQueue.call(callback(&notificationDisplay, &Notification::close));
+    printf("testClearDownTimerCallback: EXIT\r\n");
+}
+
 void messageCallback(SharedPtr<uint8_t> bufferPtr) {
     // printf("messageCallback: ENTER, bufferPtr=%s\r\n", bufferPtr.get());
     // Make sure UTF8 chars are convertes as best as possible to ASCII
@@ -63,33 +71,40 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
     // Parse out the sender etc and return structure
     SharedPtr<MessageData> msgData = DataFormat::parseNotification(bufferPtr);
 
-    // Push to circular buffer
-    notificationBuffer.push(msgData);
+    // Only push data if we have a subject or body
+    if (NULL != msgData->body || NULL != msgData->subject) {
+        // Push to circular buffer
+        notificationBuffer.push(msgData);
 
-    display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
-    display.setTextSize(1);             // Normal 1:1 pixel scale
-    display.setTextColour(WHITE);        // Draw white text
-    display.setCursor(0, 10);             // Start at top-left corner
-    display.printf(msgData->subject.get());
-    display.display();
+        // Now call the Notification display to display it.
+        globalQueue.call(callback(&notificationDisplay, &Notification::displayCurrent));
 
-    printf("messageCallback.bufferPtr.get()=%ls\r\n", bufferPtr.get());
+        // Clear down after X seconds
+        if (savedClearDown != -1) {
+            globalQueue.cancel(savedClearDown);
+        }
+        savedClearDown = globalQueue.call_in(5000, callback(&testClearDownTimerCallback));
+    }
+
+    // display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
+    // display.setTextSize(1);             // Normal 1:1 pixel scale
+    // display.setTextColour(WHITE);        // Draw white text
+    // display.setCursor(0, 10);             // Start at top-left corner
+    // display.printf(msgData->subject.get());
+    // display.display();
+
+    // printf("messageCallback.bufferPtr.get()=%ls\r\n", bufferPtr.get());
     printf("notificationBuffer.size=%d\r\n", notificationBuffer.size());
     // Dump buffer
-    NotificationBuffer::iterator_t iterator;
-    SharedPtr<MessageData> msgData2;
+    // NotificationBuffer::iterator_t iterator;
+    // SharedPtr<MessageData> msgData2;
 
-    if (MBED_SUCCESS == notificationBuffer.iterator_open(&iterator)) {
-        while (MBED_SUCCESS == notificationBuffer.iterator_next(iterator, msgData2)) {
-            printf("msgData->subject=%s\r\n", msgData2->subject.get());
-        }
-    }
-    notificationBuffer.iterator_close(iterator);
-}
-
-void testClearDownTimerCallback() {
-    savedClearDown = -1;
-    display.clearDisplay();
+    // if (MBED_SUCCESS == notificationBuffer.iterator_open(&iterator)) {
+    //     while (MBED_SUCCESS == notificationBuffer.iterator_next(iterator, msgData2)) {
+    //         printf("msgData->subject=%s\r\n", msgData2->subject.get());
+    //     }
+    // }
+    // notificationBuffer.iterator_close(iterator);
 }
 
 void button1Trigger() {
@@ -98,6 +113,7 @@ void button1Trigger() {
     if (savedClearDown != -1) {
         globalQueue.cancel(savedClearDown);
     }
+    // call the scrollUp
     globalQueue.call(callback(&notificationDisplay, &Notification::scrollUp));
     savedClearDown = globalQueue.call_in(5000, callback(&testClearDownTimerCallback));
 }
