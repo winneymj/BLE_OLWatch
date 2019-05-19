@@ -271,7 +271,7 @@ public:
 
         handle->buff_index--;
         if (handle->buff_index < 0) {
-            handle->buff_index = BufferSize;
+            handle->buff_index = BufferSize - 1;
         }
         data = _pool[handle->buff_index];
 end:
