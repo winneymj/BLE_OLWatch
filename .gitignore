@@ -6,6 +6,7 @@
 *.lo
 *.o
 *.obj
+*.bin
 
 # Precompiled Headers
 *.gch
@@ -31,5 +32,10 @@
 *.out
 *.app
 
+mbed-os
+*.ipch
+
 BUILD
 Adafruit_GFX/.hg
+mbed-os
+*.ipch

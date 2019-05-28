@@ -1,32 +1,36 @@
 
 #include <mbed.h>
 #include "notification.h"
+#include "draw.h"
 
-Notification::Notification(NotificationBuffer& buf, Adafruit_SSD1306_Spi& display) : 
-_notificationBuffer(buf), _display(display), _textSize(1), _textColour(WHITE), _state(CLOSED),
-_scrollIterator(NULL) {}
+extern Draw drawing;
+
+Notification::Notification(NotificationBuffer& buf) : 
+_notificationBuffer(buf), _textSize(1), _textColour(WHITE), _state(CLOSED), _scrollIterator(NULL) {}
 
 void Notification::display(NotificationBuffer::iterator_t& iterator) {
     printf("display: ENTER\r\n");
-    _display.clearDisplay();
+    drawing.clearDisplay();
 
     // display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
-    _display.setTextSize(_textSize);            // Normal 1:1 pixel scale
-    _display.setTextColour(_textColour);        // Draw white text
-    _display.setCursor(0, 10);             // Start at top-left corner
+    // _display.setTextSize(_textSize);            // Normal 1:1 pixel scale
+    // _display.setTextColour(_textColour);        // Draw white text
+    // _display.setCursor(0, 10);             // Start at top-left corner
 
     // Iterator should be open before call to here
     SharedPtr<MessageData> msgData;
     // Get next item of buffer to display
     if (MBED_SUCCESS == _notificationBuffer.iterator_next(iterator, msgData)) {
-        _display.printf(msgData->subject.get());
+        // _display.printf(msgData->subject.get());
+        drawing.drawString(msgData->subject.get(), false, 0, 10);
         printf("msgData->subject%s\r\n", msgData->subject.get());
     } else {
         // Nothing left in buffer
-        _display.printf("No more notifications");
+        // _display.printf("No more notifications");
+        drawing.drawString("No more notifications", false, 0, 10);
     }
 
-    _display.display();
+    drawing.display();
 
     // Set state to open as we are displaying
     _state = OPEN;
@@ -37,10 +41,12 @@ void Notification::display(NotificationBuffer::iterator_t& iterator) {
 void Notification::scrollUp() {
     printf("scrollUp: ENTER\r\n");
     printf("scrollUp: _state=%s\r\n", (OPEN == _state) ? "OPEN" : "CLOSE");
+
     // See if any notifications and display "No Notifications" if none.
     if (_notificationBuffer.empty()) {
-        _display.printf("No Notifications");
-        _display.display();
+        drawing.drawString("No Notifications", false, 0, 10);
+        // _display.printf("No Notifications");
+        drawing.display();
     } else {
         // If state is closed then open and display first message.
         // If already open then go to next message
@@ -84,7 +90,8 @@ void Notification::displayCurrent() {
 void Notification::close() {
     printf("close: ENTER\r\n");
 
-    _display.clearDisplay();
+    drawing.clearDisplay();
+    // _display.clearDisplay();
     _state = CLOSED;
     if (NULL != _scrollIterator) {
         _notificationBuffer.iterator_close(_scrollIterator);

@@ -290,7 +290,9 @@
                 "${workspaceFolder}/mbed-os/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_SDK_14_2/libraries/util",
                 "${workspaceFolder}/source",
                 "${workspaceFolder}/source/utils",
-                "${workspaceFolder}/source/graphics"
+                "${workspaceFolder}/source/graphics",
+                "${workspaceFolder}/source/graphics/watch",
+                "${workspaceFolder}/source/graphics/watch/faces"
             ],
             "name": "Windows",
             "defines": [
@@ -347,7 +349,7 @@
                 "DEVICE_SERIAL_FC=1"
             ],
             "intelliSenseMode": "msvc-x64",
-            "compilerPath": "C:\\\\MinGW\\\\bin\\\\gcc.exe",
+            "compilerPath": "C:\\\\\\\\\\\\\\\\MinGW\\\\\\\\\\\\\\\\bin\\\\\\\\\\\\\\\\gcc.exe",
             "cStandard": "c11",
             "cppStandard": "c++17"
         }

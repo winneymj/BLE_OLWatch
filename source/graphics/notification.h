@@ -13,7 +13,7 @@ public:
         CLOSED
     };
 
-    Notification(NotificationBuffer& buf, Adafruit_SSD1306_Spi& display);
+    Notification(NotificationBuffer& buf);
     void display(NotificationBuffer::iterator_t& iterator);
     void scrollUp();
     void scrollDown();
@@ -23,7 +23,7 @@ public:
 
 private:
     NotificationBuffer& _notificationBuffer;
-    Adafruit_SSD1306_Spi& _display;
+    // Adafruit_SSD1306_Spi& _display;
     uint8_t _textSize;
     uint8_t _textColour;
     eState _state;
