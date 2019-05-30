@@ -5,6 +5,7 @@
 #include "Adafruit_GFX.h"
 #include "Adafruit_SSD1306.h"
 #include "typedefs.h"
+#include "draw.h"
 
 class Notification {
 public:
@@ -13,7 +14,7 @@ public:
         CLOSED
     };
 
-    Notification(NotificationBuffer& buf);
+    Notification(NotificationBuffer& buf, Draw& display);
     void display(NotificationBuffer::iterator_t& iterator);
     void scrollUp();
     void scrollDown();
@@ -23,7 +24,7 @@ public:
 
 private:
     NotificationBuffer& _notificationBuffer;
-    // Adafruit_SSD1306_Spi& _display;
+    Draw& _display;
     uint8_t _textSize;
     uint8_t _textColour;
     eState _state;

@@ -16,4 +16,12 @@ typedef struct messageData {
 #define BUF_SIZE 10
 typedef CircBuffer<SharedPtr<MessageData>, BUF_SIZE> NotificationBuffer;
 
+typedef struct{
+	bool active;
+	uint8_t offsetY;
+	void (*animOnComplete)(void);
+	bool goingOffScreen;
+}anim_s;
+
+
 #endif

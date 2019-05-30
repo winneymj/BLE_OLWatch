@@ -1,16 +1,13 @@
 
 #include <mbed.h>
 #include "notification.h"
-#include "draw.h"
 
-extern Draw drawing;
-
-Notification::Notification(NotificationBuffer& buf) : 
-_notificationBuffer(buf), _textSize(1), _textColour(WHITE), _state(CLOSED), _scrollIterator(NULL) {}
+Notification::Notification(NotificationBuffer& buf, Draw& display): 
+_display(display), _notificationBuffer(buf), _textSize(1), _textColour(WHITE), _state(CLOSED), _scrollIterator(NULL) {}
 
 void Notification::display(NotificationBuffer::iterator_t& iterator) {
     printf("display: ENTER\r\n");
-    drawing.clearDisplay();
+    _display.clearDisplay();
 
     // display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
     // _display.setTextSize(_textSize);            // Normal 1:1 pixel scale
@@ -22,15 +19,15 @@ void Notification::display(NotificationBuffer::iterator_t& iterator) {
     // Get next item of buffer to display
     if (MBED_SUCCESS == _notificationBuffer.iterator_next(iterator, msgData)) {
         // _display.printf(msgData->subject.get());
-        drawing.drawString(msgData->subject.get(), false, 0, 10);
+        _display.drawString(msgData->subject.get(), false, 0, 10);
         printf("msgData->subject%s\r\n", msgData->subject.get());
     } else {
         // Nothing left in buffer
         // _display.printf("No more notifications");
-        drawing.drawString("No more notifications", false, 0, 10);
+        _display.drawString("No more notifications", false, 0, 10);
     }
 
-    drawing.display();
+    _display.display();
 
     // Set state to open as we are displaying
     _state = OPEN;
@@ -44,9 +41,9 @@ void Notification::scrollUp() {
 
     // See if any notifications and display "No Notifications" if none.
     if (_notificationBuffer.empty()) {
-        drawing.drawString("No Notifications", false, 0, 10);
+        _display.drawString("No Notifications", false, 0, 10);
         // _display.printf("No Notifications");
-        drawing.display();
+        _display.display();
     } else {
         // If state is closed then open and display first message.
         // If already open then go to next message
@@ -90,7 +87,7 @@ void Notification::displayCurrent() {
 void Notification::close() {
     printf("close: ENTER\r\n");
 
-    drawing.clearDisplay();
+    _display.clearDisplay();
     // _display.clearDisplay();
     _state = CLOSED;
     if (NULL != _scrollIterator) {

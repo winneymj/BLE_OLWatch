@@ -48,7 +48,7 @@ private:
     BLEDevice &ble;
     // ReadWriteGattCharacteristic<bool> ledState;
     WriteOnlyArrayGattCharacteristic<uint8_t, 32> _message;
-    uint8_t writeValue[32];
+    uint8_t writeValue[32] = {0};
 };
 
 #endif /* #ifndef __BLE_LED_SERVICE_H__ */

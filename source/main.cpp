@@ -30,8 +30,8 @@
 #include "notification.h"
 #include "draw.h"
 #include "normal.h"
-#define PROGMEM
-#include "FreeMonoBold9pt7b.h"
+// #define PROGMEM
+// #include "FreeMonoBold9pt7b.h"
 
 // 
 //  Image data for _0
@@ -39,70 +39,89 @@
 
 const uint8_t _0Bitmaps[] =
 {
-	0x7F, 0xC0, //  ######### 
-	0xFF, 0xE0, // ###########
-	0xFF, 0xE0, // ###########
-	0xF1, 0xE0, // ####   ####
-	0xE0, 0xE0, // ###     ###
-	0xE0, 0xE0, // ###     ###
-	0xE0, 0xE0, // ###     ###
-	0xE0, 0xE0, // ###     ###
-	0xE0, 0xE0, // ###     ###
-	0xE0, 0xE0, // ###     ###
-	0xE0, 0xE0, // ###     ###
-	0xE0, 0xE0, // ###     ###
-	0xF1, 0xE0, // ####   ####
-	0xFF, 0xE0, // ###########
-	0xFF, 0xE0, // ###########
-	0x7F, 0xC0, //  ######### 
+    // DotFactory settings:
+    // Byte: Bit Layout=ColumnMajor
+
+	//  ######### 
+	// ###########
+	// ###########
+	// ####   ####
+	// ###     ###
+	// ###     ###
+	// ###     ###
+	// ###     ###
+	// ###     ###
+	// ###     ###
+	// ###     ###
+	// ###     ###
+	// ####   ####
+	// ###########
+	// ###########
+	//  ######### 
+	0xFE, 0xFF, 0xFF, 0x0F, 0x07, 0x07, 0x07, 0x0F, 0xFF, 0xFF, 0xFE, 
+	0x7F, 0xFF, 0xFF, 0xF0, 0xE0, 0xE0, 0xE0, 0xF0, 0xFF, 0xFF, 0x7F, 
 };
 
 // Bitmap sizes for _0
 const uint8_t _0WidthPixels = 11;
 const uint8_t _0HeightPixels = 16;
 
-const uint8_t small2Font[][22] PROGMEM ={
-	{
-		0xFE,0xFF,0xFF,0x0F,0x07,0x07,0x07,0x0F,0xFF,0xFF,0xFE,
-		0x7F,0xFF,0xFF,0xF0,0xE0,0xE0,0xE0,0xF0,0xFF,0xFF,0x7F,
-	},
-	{
-		0x00,0x00,0x18,0x1C,0x1E,0xFF,0xFF,0xFF,0x00,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0x00,0x00,0x00,
-	},
-	{
-		0x1E,0x1F,0x1F,0x07,0x07,0x87,0xC7,0xE7,0xFF,0x7F,0x3E,
-		0xF0,0xF8,0xFC,0xFE,0xEF,0xE7,0xE3,0xE1,0xE0,0xE0,0xE0,
-	},
-	{
-		0x0E,0x0F,0x0F,0x07,0x07,0x87,0xC7,0xEF,0xFF,0x7F,0x3E,
-		0x70,0xF0,0xF0,0xE0,0xE0,0xE1,0xE3,0xF7,0xFF,0xFE,0x7C,
-	},
-	{
-		0xC0,0xE0,0xF0,0x78,0x3C,0x1E,0xFF,0xFF,0xFF,0x00,0x00,
-		0x1F,0x1F,0x1F,0x1C,0x1C,0x1C,0xFF,0xFF,0xFF,0x1C,0x1C,
-	},
-	{
-		0xFF,0xFF,0xFF,0xC7,0xC7,0xC7,0xC7,0xC7,0xC7,0x87,0x07,
-		0x71,0xF1,0xF1,0xE1,0xE1,0xE1,0xE1,0xF3,0xFF,0x7F,0x3F,
-	},
-	{
-		0xFE,0xFF,0xFF,0x8F,0x87,0x87,0x87,0x87,0x8F,0x8F,0x0E,
-		0x7F,0xFF,0xFF,0xE3,0xE3,0xE3,0xE3,0xE3,0xFF,0xFF,0x7F,
-	},
-	{
-		0x0F,0x0F,0x0F,0x07,0x07,0x07,0x87,0xC7,0xFF,0xFF,0x7F,
-		0xE0,0xF0,0x78,0x3C,0x1E,0x0F,0x07,0x03,0x01,0x00,0x00,
-	},
-	{
-		0x7E,0xFF,0xFF,0xC7,0x87,0x87,0x87,0xC7,0xFF,0xFF,0x7E,
-		0x7E,0xFF,0xFF,0xE3,0xE1,0xE1,0xE1,0xE3,0xFF,0xFF,0x7E,
-	},
-	{
-		0xFE,0xFF,0xFF,0xC7,0xC7,0xC7,0xC7,0xC7,0xFF,0xFF,0xFE,
-		0x78,0xF9,0xF9,0xE1,0xE1,0xE1,0xE1,0xE1,0xFF,0xFF,0x7F,
-	}
+// 
+//  Image data for _1
+// 
+
+const uint8_t _1Bitmaps[] =
+{
+	//    ###
+	//   ####
+	//  #####
+	// ######
+	// ######
+	//    ###
+	//    ###
+	//    ###
+	//    ###
+	//    ###
+	//    ###
+	//    ###
+	//    ###
+	//    ###
+	//    ###
+	//    ###
+	0x18, 0x1C, 0x1E, 0xFF, 0xFF, 0xFF, 
+	0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 
 };
+
+// Bitmap sizes for _1
+const uint8_t _1WidthPixels = 6;
+const uint8_t _1HeightPixels = 16;
+
+const uint8_t _2Bitmaps[] =
+{
+	//  ######### 
+	// ###########
+	// ###########
+	// ###     ###
+	// ###     ###
+	//        ####
+	//       #### 
+	//      ####  
+	//     ####   
+	//    ####    
+	//   ####     
+	//  ####      
+	// ####       
+	// ###########
+	// ###########
+	// ###########
+	0x1E, 0x1F, 0x1F, 0x07, 0x07, 0x87, 0xC7, 0xE7, 0xFF, 0x7F, 0x3E, 
+	0xF0, 0xF8, 0xFC, 0xFE, 0xEF, 0xE7, 0xE3, 0xE1, 0xE0, 0xE0, 0xE0, 
+};
+
+// Bitmap sizes for _2
+const uint8_t _2WidthPixels = 11;
+const uint8_t _2HeightPixels = 16;
+
 
 /** This example demonstrates all the basic setup required
  *  for pairing and setting up link security both as a central and peripheral
@@ -119,25 +138,20 @@ const uint8_t small2Font[][22] PROGMEM ={
 // Serial pc(USBTX, USBRX);
 SPI mySPI(SPI_PSELMOSI0, NC, SPI_PSELSCK0, NC);
 // Adafruit_SSD1306_Spi *display;
-Adafruit_SSD1306_Spi display(mySPI, P0_16, P0_17, P0_14 , 128, 64);
+// Adafruit_SSD1306_Spi display(mySPI, P0_16, P0_17, P0_14 , 128, 64);
+Draw myDisplay(mySPI, P0_16, P0_17, P0_14 , 128, 64);
 events::EventQueue globalQueue;
 // Circular buffer to hold history or messages
 NotificationBuffer notificationBuffer;
-Notification notificationDisplay(notificationBuffer);
-
-// Create the draw library
-Draw drawing(display);
+Notification notificationDisplay(notificationBuffer, myDisplay);
 
 // Normal watch face
-Normal face;
+Normal face(myDisplay);
 
 // Button Interrupts
 InterruptIn button1(P0_11);
 
 int savedClearDown = -1;
-
-static void draw();
-
 
 void testClearDownTimerCallback() {
     printf("testClearDownTimerCallback: ENTER\r\n");
@@ -178,7 +192,7 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
     // display.display();
 
     // printf("messageCallback.bufferPtr.get()=%ls\r\n", bufferPtr.get());
-    printf("notificationBuffer.size=%d\r\n", notificationBuffer.size());
+    printf("notificationBuffer.size=%ld\r\n", notificationBuffer.size());
     // Dump buffer
     // NotificationBuffer::iterator_t iterator;
     // SharedPtr<MessageData> msgData2;
@@ -218,19 +232,33 @@ int main() {
 
     // Show initial display buffer contents on the screen --
     // the library initializes this with an Adafruit splash screen.
-    display.display();
+
+    // myDisplay.fillScreen(WHITE);
+    // myDisplay.display();
     wait_ms(2000); // Pause for 2 seconds
     // Clear the buffer
-    display.clearDisplay();
+    myDisplay.clearDisplay();
 
     printf("\r\n PERIPHERAL \r\n\r\n");
 //******** TEST
-    face.draw();
-    display.display();
+    // face.draw();
+    // myDisplay.display();
 
-    display.drawBitmap(10, 10, (uint8_t *)&_0Bitmaps, 11, 16, WHITE);
-    display.display();
+    // myDisplay.drawBitmap(20, 10, (uint8_t *)&_0Bitmaps, 11, 16, WHITE);
+    // myDisplay.display();
 
+    myDisplay.fastDrawBitmap(1, 0, (uint8_t *)&_0Bitmaps, 11, 16, false, 0);
+
+    myDisplay.fastDrawBitmap(10, 10, (uint8_t *)&_0Bitmaps, 11, 16, false, 0);
+
+    myDisplay.fastDrawBitmap(20, 20, (uint8_t *)&_0Bitmaps, 11, 16, false, 0);
+
+    myDisplay.fastDrawBitmap(30, 31, (uint8_t *)&_0Bitmaps, 11, 16, false, 0);
+
+    myDisplay.fastDrawBitmap(40, 41, (uint8_t *)&_1Bitmaps, 6, 16, false, 0);
+ 
+    myDisplay.fastDrawBitmap(100, 0, (uint8_t *)&_2Bitmaps, 11, 16, false, 0);
+    myDisplay.display();
     // display.setCursor(10, 20);
     // display.setFont(&FreeMonoBold9pt7b);
     // display.printf("Hello");

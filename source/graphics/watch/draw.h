@@ -5,18 +5,14 @@
 #include "Adafruit_GFX.h"
 #include "Adafruit_SSD1306.h"
 
-class Draw {
+class Draw: public Adafruit_SSD1306_Spi {
 public:
     // ctor
-    Draw(Adafruit_SSD1306_Spi& display);
+    Draw(SPI &spi, PinName dc, PinName rst, PinName cs, uint8_t w, uint8_t h): Adafruit_SSD1306_Spi(spi, dc, rst, cs, w, h) {};
     void drawString(char* string, bool invert, int16_t x, int16_t y);
-    void clearDisplay() {_display.clearDisplay(); };
-    void display() {_display.display(); };
+    void fastDrawBitmap(uint8_t x, uint8_t yy, const uint8_t* bitmap, uint8_t w, uint8_t h, bool invert, uint8_t offsetY);
 
 private:
-    Adafruit_SSD1306_Spi& _display;
-    uint8_t _textSize;
-    uint8_t _textColour;
 };
 
 #endif

@@ -3,10 +3,10 @@
 
 #include "resources.h"
 #include "normal.h"
-#include "draw.h"
 
 extern time_t timeDate;
-extern Draw drawing;
+
+Normal::Normal(Draw& display): _display(display) {};
 
 void Normal::draw() {
 
@@ -40,7 +40,9 @@ void Normal::drawDate() {
 	char buff[32] = {0};
     strftime(buff, 32, "%a, %b %e, %Y", localtime(&timeDate));	
 
-	drawing.drawString(buff, false, 12, 0);
+    _display.setTextSize(1);
+    _display.setTextColour(WHITE);
+	_display.drawString(buff, false, 12, 0);
 }
 
 #define COMPILE_ANIMATIONS

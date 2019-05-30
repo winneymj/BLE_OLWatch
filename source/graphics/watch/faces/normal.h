@@ -2,6 +2,7 @@
 #define __GRAPHICS_NORMAL_H__
 
 #include <mbed.h>
+#include "draw.h"
 
 typedef struct
 {
@@ -18,9 +19,11 @@ typedef struct
 
 class Normal {
 public:
+	Normal(Draw& display);
     void draw();
 
-private:    
+private:
+	Draw& _display;
     void drawDate();
     void/*display_t*/ ticker();
 };
