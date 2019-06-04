@@ -17,13 +17,11 @@ void Draw::drawString(char* string, bool invert, int16_t x, int16_t y) {
 // Drawing bitmaps that are completely on-screen and have a Y co-ordinate that is a multiple of 8 results in best performance
 // PS - Sorry about the poorly named variables ;_;
 void Draw::fastDrawBitmap(uint8_t x, uint8_t yy, const uint8_t* bitmap, uint8_t w, uint8_t h, bool invert, uint8_t offsetY) {
-//Serial.println("-------fastDrawBitmap----------");
 	uint8_t color = WHITE;
 
 	// Apply animation offset
 	yy += animation_offsetY();
 
-// std::printf("fast, yy=%d\n\r", yy);
     // set up the pointer for fast movement through the buffer
     register uint8_t *pBuf = _frmbuf;
 
@@ -38,9 +36,7 @@ void Draw::fastDrawBitmap(uint8_t x, uint8_t yy, const uint8_t* bitmap, uint8_t 
 
 	uint8_t thing3 = (yy+h);
 	
-// std::printf("fast, h2=%d\n\r", h2);
 	for (uint8_t hh = 0; hh < h2; hh++) {
-// std::printf("fast, hh=%d\n\r", hh);
 		// 
 		uint8_t hhh = (hh * 8) + y; // Current Y pos (every 8 pixels)
 		uint8_t hhhh = hhh + 8; // Y pos at end of pixel column (8 pixels)
@@ -69,9 +65,6 @@ void Draw::fastDrawBitmap(uint8_t x, uint8_t yy, const uint8_t* bitmap, uint8_t 
 		{
 			// ww < w
             for (uint8_t ww = 0; ww < w; ww++ ) {
-// std::printf("1 fast, ww=%d\n\r", ww);
-			// LOOP(w, ww)
-			// {
 				// Workout X co-ordinate in frame buffer to place next 8 pixels
 				uint8_t xx = ww + x;
 			
@@ -80,19 +73,9 @@ void Draw::fastDrawBitmap(uint8_t x, uint8_t yy, const uint8_t* bitmap, uint8_t 
 					continue;
 
 				// Read pixels
-				// uint8_t pixels = readPixels(b + ww, invert) & offsetMask;
-// std::printf("1 fast, b[%d]\n\r", ww);
-
                 uint8_t pixels = (invert ? ~b[ww] : b[ww]) & offsetMask;
 
-// std::printf("1 fast, pixels=0x%X\n\r", pixels);
-
 				pBuf[xx + aa] |= pixels;
-// display();
-// wait_ms(2000);
-
-
-				//setBuffByte(buff, xx, hhh, pixels, colour);
 			}
 		}
 		else
@@ -101,9 +84,6 @@ void Draw::fastDrawBitmap(uint8_t x, uint8_t yy, const uint8_t* bitmap, uint8_t 
 			
 			// 
             for (uint8_t ww = 0; ww < w; ww++ ) {
-// std::printf("2 fast, ww=%d\n\r", ww);
-			// LOOP(w, ww)
-			// {
 				// Workout X co-ordinate in frame buffer to place next 8 pixels
 				uint8_t xx = ww + x;
 		
@@ -113,23 +93,17 @@ void Draw::fastDrawBitmap(uint8_t x, uint8_t yy, const uint8_t* bitmap, uint8_t 
 
 				// Read pixels
                 uint8_t pixels = (invert ? ~b[ww] : b[ww]) & offsetMask;
-				// uint8_t pixels = readPixels(b + ww, invert) & offsetMask;
 
 				// 
 				if(hhh < HEIGHT)
 					pBuf[xx + aa] |= pixels << pixelOffset;
-					//setBuffByte(buff, xx, hhh, pixels << pixelOffset, colour);				
 
 				// 
 				if(hhhh < HEIGHT)
 				{
 					pBuf[xx + aaa] |= pixels >> (8 - pixelOffset);
-					//setBuffByte(buff, xx, hhhh, pixels >> (8 - pixelOffset), colour);
-// display();
-// wait_ms(2000);
 				}		
 			}
 		}
 	}
 }
-

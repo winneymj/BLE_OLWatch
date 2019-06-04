@@ -8,7 +8,7 @@ typedef struct
 {
 	int8_t x;
 	int8_t y;
-	const int8_t* bitmap;
+	const uint8_t* bitmap;
 	int8_t w;
 	int8_t h;
 	int8_t offsetY;
@@ -26,6 +26,7 @@ private:
 	Draw& _display;
     void drawDate();
     void/*display_t*/ ticker();
+	void drawTickerNum(tickerData_t* data);
 };
 
 #endif

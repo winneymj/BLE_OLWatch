@@ -23,5 +23,15 @@ typedef struct{
 	bool goingOffScreen;
 }anim_s;
 
+typedef enum
+{
+	TIMEMODE_24HR = 0,
+	TIMEMODE_12HR = 1
+} timemode_t;
+
+#define div10(x) (x / 10)
+#define mod10(x) (x % 10)
+
+#define NOINVERT	false
 
 #endif

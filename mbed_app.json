@@ -1,0 +1,9 @@
+{
+    "config": {
+        "param1": {
+            "help": "The first configuration parameter",
+            "macro_name": "COMPILE_ANIMATIONS",
+            "value": 1
+        }
+    }
+}
