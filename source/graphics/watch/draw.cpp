@@ -16,9 +16,9 @@ void Draw::drawString(char* string, bool invert, int16_t x, int16_t y) {
 // Only downside is that height must be a multiple of 8, otherwise it gets rounded down to the nearest multiple of 8
 // Drawing bitmaps that are completely on-screen and have a Y co-ordinate that is a multiple of 8 results in best performance
 // PS - Sorry about the poorly named variables ;_;
-void Draw::fastDrawBitmap(uint8_t x, uint8_t yy, const uint8_t* bitmap, uint8_t w, uint8_t h, bool invert, uint8_t offsetY) {
+void Draw::fastDrawBitmap(uint8_t x, uint8_t yy, const uint8_t* bitmap, uint8_t w, uint8_t h, bool invert, int8_t offsetY) {
 	uint8_t color = WHITE;
-
+// std::printf("offsetY=%d\r\n", offsetY);
 	// Apply animation offset
 	yy += animation_offsetY();
 

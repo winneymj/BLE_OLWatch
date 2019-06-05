@@ -18,6 +18,7 @@
 #include <events/mbed_events.h>
 #include <mbed.h>
 #include <PinNames.h>
+#include <time.h>
 #include "ble/BLE.h"
 #include "SecurityManager.h"
 #include "LEDService.h"
@@ -30,6 +31,7 @@
 #include "notification.h"
 #include "draw.h"
 #include "normal.h"
+#include "resources.h"
 // #define PROGMEM
 // #include "FreeMonoBold9pt7b.h"
 
@@ -43,6 +45,8 @@
  *  During the test output is written on the serial connection to monitor its
  *  progress.
  */
+
+extern time_t timeDate;
 
 // define the Serial object
 // Serial pc(USBTX, USBRX);
@@ -150,9 +154,28 @@ int main() {
     myDisplay.clearDisplay();
 
     printf("\r\n PERIPHERAL \r\n\r\n");
+
+    // int8_t yPos = 0;
+    // while (true) {
+    //     uint8_t arraySize = (FONT_SMALL2_WIDTH * FONT_SMALL2_HEIGHT) / 8;
+    //     const uint8_t* bitmap = small2Font[0 * arraySize];
+    //     myDisplay.fastDrawBitmap(104, 28, bitmap, 
+    //         FONT_SMALL2_WIDTH, FONT_SMALL2_HEIGHT, NOINVERT, yPos);
+    //     myDisplay.display();
+    //     yPos--;
+    //     wait_ms(700);
+    //     myDisplay.clearDisplay();
+    // printf("ypos=%d\r\n", yPos);
+    // }
+
 //******** TEST
-    // face.draw();
-    // myDisplay.display();
+    while (true) {
+        timeDate = time(NULL);
+        face.draw();
+        myDisplay.display();
+        // wait_ms(300);
+        myDisplay.clearDisplay();
+    }
 
     // myDisplay.drawBitmap(20, 10, (uint8_t *)&_0Bitmaps, 11, 16, WHITE);
     // myDisplay.display();

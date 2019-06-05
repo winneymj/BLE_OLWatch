@@ -19,7 +19,7 @@ void Normal::draw() {
 	drawDate();
 
 	// Draw time animated
-	// /*display_t busy = */ticker();
+	/*display_t busy = */ticker();
 
 	// Draw battery icon
 	// drawBattery();
@@ -204,8 +204,9 @@ void Normal::drawTickerNum(tickerData_t* data)
 	uint8_t x = data->x;
 	uint8_t y = data->y;
 
-	if(!data->moving || yPos == 0 || yPos == 255)
+	if(!data->moving || yPos == 0 || yPos == 255) {
 		_display.fastDrawBitmap(x, y, bitmap, data->w, data->h, NOINVERT, 0);
+	}
 	else
 	{
 		uint8_t prev = data->val - 1;
