@@ -32,6 +32,7 @@
 #include "draw.h"
 #include "normal.h"
 #include "resources.h"
+
 // #define PROGMEM
 // #include "FreeMonoBold9pt7b.h"
 
@@ -66,6 +67,7 @@ Normal face(myDisplay);
 InterruptIn button1(P0_11);
 
 int savedClearDown = -1;
+int _savedFaceCall = -1;
 
 void testClearDownTimerCallback() {
     printf("testClearDownTimerCallback: ENTER\r\n");
@@ -119,15 +121,31 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
     // notificationBuffer.iterator_close(iterator);
 }
 
+void shutdownWatchFace() {
+    printf("shutdownWatchFace\r\n");
+    if (-1 != _savedFaceCall) {
+        globalQueue.cancel(_savedFaceCall);
+        _savedFaceCall = -1;
+        myDisplay.clearDisplay();
+        myDisplay.display();
+    }
+}
+
 void button1Trigger() {
     // If multiple clicks do not and the clear down
     // has not run then cancel the clear down.
-    if (savedClearDown != -1) {
-        globalQueue.cancel(savedClearDown);
-    }
-    // call the scrollUp
-    globalQueue.call(callback(&notificationDisplay, &Notification::scrollUp));
-    savedClearDown = globalQueue.call_in(5000, callback(&testClearDownTimerCallback));
+    // if (savedClearDown != -1) {
+    //     globalQueue.cancel(savedClearDown);
+    // }
+    // call the Notification scrollUp
+    // globalQueue.call(callback(&notificationDisplay, &Notification::scrollUp));
+    // savedClearDown = globalQueue.call_in(5000, callback(&testClearDownTimerCallback));
+
+    // if (_savedFaceCallShutdown != -1) {
+    //     globalQueue.cancel(_savedFaceCall);
+    // }
+    _savedFaceCall = globalQueue.call_every(10, callback(&face, &Normal::displayWatchFace));
+    globalQueue.call_in(10000, callback(&shutdownWatchFace));
 }
 
 void setupButtonCallbacks() {
@@ -168,37 +186,8 @@ int main() {
     // printf("ypos=%d\r\n", yPos);
     // }
 
-//******** TEST
-    while (true) {
-        timeDate = time(NULL);
-        face.draw();
-        myDisplay.display();
-        // wait_ms(300);
-        myDisplay.clearDisplay();
-    }
+    globalQueue.dispatch_forever();
 
-    // myDisplay.drawBitmap(20, 10, (uint8_t *)&_0Bitmaps, 11, 16, WHITE);
-    // myDisplay.display();
-
-    // myDisplay.fastDrawBitmap(1, 0, (uint8_t *)&_0Bitmaps, 11, 16, false, 0);
-
-    // myDisplay.fastDrawBitmap(10, 10, (uint8_t *)&_0Bitmaps, 11, 16, false, 0);
-
-    // myDisplay.fastDrawBitmap(20, 20, (uint8_t *)&_0Bitmaps, 11, 16, false, 0);
-
-    // myDisplay.fastDrawBitmap(30, 31, (uint8_t *)&_0Bitmaps, 11, 16, false, 0);
-
-    // myDisplay.fastDrawBitmap(40, 41, (uint8_t *)&_1Bitmaps, 6, 16, false, 0);
- 
-    // myDisplay.fastDrawBitmap(100, 0, (uint8_t *)&_2Bitmaps, 11, 16, false, 0);
-    // myDisplay.display();
-
-    // display.setCursor(10, 20);
-    // display.setFont(&FreeMonoBold9pt7b);
-    // display.printf("Hello");
-    // display.display();
-
-//******** TEST
     // BLE& ble = BLE::Instance();
     // SMDevicePeripheral peripheral(ble, globalQueue);
     // peripheral.run();

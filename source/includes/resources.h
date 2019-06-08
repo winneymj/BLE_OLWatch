@@ -265,10 +265,6 @@ const uint8_t small2Font[][22] = {
     }
 };
 
-#define SMALLFONT_WIDTH 5
-#define SMALLFONT_HEIGHT 8
-// extern const byte smallFont[][5];
-
 #define MIDFONT_WIDTH 19
 #define MIDFONT_HEIGHT 24
 
@@ -565,12 +561,65 @@ const uint8_t midFont[][57] = {
     }
 };
 
-// Bitmap sizes for _0011_0
-// const uint_8 _0011_0WidthPixels = 19;
-// const uint_8 _0011_0HeightPixels = 24;
+#define FONT_COLON_WIDTH 6
+#define FONT_COLON_HEIGHT 24
 
+const uint8_t colon[] = {
+	0x00, 0xF8, 0xF8, 0xF8, 0xF8, 0x00,
+	0x00, 0xC3, 0xC3, 0xC3, 0xC3, 0x00,
+	0x00, 0x1F, 0x1F, 0x1F, 0x1F, 0x00
+};
 
+#define BATTERY_ICON_WIDTH 16
+#define BATTERY_ICON_HEIGHT 8
 
+const uint8_t battIconEmptyBitmaps[] = {
+	// ############### 
+	// #             # 
+	// # #           ##
+	// # #           ##
+	// # #           ##
+	// # #           ##
+	// #             # 
+	// ############### 
+	0xFF, 0x81, 0xBD, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0xFF, 0x3C, 
+};
+
+const uint8_t battIconFullBitmaps[] = {
+	// ############### 
+	// #             # 
+	// # ########### ##
+	// # ########### ##
+	// # ########### ##
+	// # ########### ##
+	// #             # 
+	// ############### 
+	0xFF, 0x81, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0x81, 0xFF, 0x3C, 
+};
+
+const uint8_t battIconHighBitmaps[] = {
+	// ############### 
+	// #             # 
+	// # ########    ##
+	// # ########    ##
+	// # ########    ##
+	// # ########    ##
+	// #             # 
+	// ############### 
+	0xFF, 0x81, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0xBD, 0x81, 0x81, 0x81, 0x81, 0xFF, 0x3C, 
+};
+
+const uint8_t battIconLowBitmaps[] = {
+	// ############### 
+	// #             # 
+	// # ####        ##
+	// # ####        ##
+	// # ####        ##
+	// # ####        ##
+	// #             # 
+	// ############### 
+	0xFF, 0x81, 0xBD, 0xBD, 0xBD, 0xBD, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0xFF, 0x3C, 
+};
 
 // String formats
 #define DATE_FORMAT ("%s %02hhu %s 20%02hhu")

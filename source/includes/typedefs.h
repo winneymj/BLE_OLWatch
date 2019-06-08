@@ -29,6 +29,13 @@ typedef enum
 	TIMEMODE_12HR = 1
 } timemode_t;
 
+typedef enum
+{
+	DISPLAY_DONE,
+	DISPLAY_BUSY,
+} display_t;
+
+
 #define div10(x) (x / 10)
 #define mod10(x) (x % 10)
 

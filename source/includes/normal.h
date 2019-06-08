@@ -3,6 +3,7 @@
 
 #include <mbed.h>
 #include "draw.h"
+#include "typedefs.h"
 
 typedef struct
 {
@@ -20,12 +21,16 @@ typedef struct
 class Normal {
 public:
 	Normal(Draw& display);
-    void draw();
+    display_t draw();
+	void displayWatchFace();
+	void shutdownDisplay();
 
 private:
 	Draw& _display;
+	bool _shutdown;
+
     void drawDate();
-    void/*display_t*/ ticker();
+    display_t ticker();
 	void drawTickerNum(tickerData_t* data);
 };
 

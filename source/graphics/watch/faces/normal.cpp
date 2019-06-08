@@ -4,6 +4,7 @@
 #include "resources.h"
 #include "normal.h"
 #include "appconfig.h"
+#include "commonUI.h"
 
 extern time_t timeDate;
 
@@ -11,37 +12,48 @@ extern time_t timeDate;
 #define TIME_POS_Y	20
 #define TICKER_GAP	4
 
-Normal::Normal(Draw& display): _display(display) {};
+extern int _savedFaceCall;
 
-void Normal::draw() {
+Normal::Normal(Draw& display): _display(display), _shutdown(false) {};
+
+void Normal::displayWatchFace() {
+    // while (!_shutdown) {
+        timeDate = time(NULL);
+        display_t busy = draw();
+        _display.display();
+// printf("busy=%d\r\n", busy);
+        // DISPLAY_BUSY : DISPLAY_DONE
+        // wait_ms(300);
+        _display.clearDisplay();
+		// wait_ms(1);
+    // }
+	// // Reset shutdown flag
+	// _shutdown = false;
+}
+
+void Normal::shutdownDisplay() {
+	_shutdown = true;
+}
+
+display_t Normal::draw() {
 
     // Draw date
 	drawDate();
 
 	// Draw time animated
-	/*display_t busy = */ticker();
+	display_t busy = ticker();
 
 	// Draw battery icon
-	// drawBattery();
+	// commonUI.drawBattery();
 
     // @TODO USB and CHARGING
 
     // @DRAW NEXT ALARM 
+
+	return busy;
 }
 
 void Normal::drawDate() {
-	// // Get day string
-	// char day[BUFFSIZE_STR_DAYS];
-	// strcpy(day, days[timeDate.date.day]);
-
-	// // Get month string
-	// char month[BUFFSIZE_STR_MONTHS];
-	// strcpy(month, months[timeDate.date.month]);
-
-	// // Draw date
-	// char buff[BUFFSIZE_DATE_FORMAT];
-	// sprintf(buff, DATE_FORMAT, day, timeDate.date.date, month, timeDate.date.year);
-
 	char buff[32] = {0};
     strftime(buff, 32, "%a, %b %e, %Y", localtime(&timeDate));	
 
@@ -50,7 +62,7 @@ void Normal::drawDate() {
 	_display.drawString(buff, false, 12, 0);
 }
 
-void/*display_t*/ Normal::ticker() {
+display_t Normal::ticker() {
 	static int16_t yPos;
 	static int16_t yPos_secs;
 	static bool moving = false;
@@ -181,19 +193,19 @@ void/*display_t*/ Normal::ticker() {
 	
 // 	// Draw colon for half a second
 // 	if(RTC_HALFSEC())
-// 		draw_bitmap(TIME_POS_X + 46 + 2, TIME_POS_Y, colon, FONT_COLON_WIDTH, FONT_COLON_HEIGHT, NOINVERT, 0);
+	// _display.fastDrawBitmap(TIME_POS_X + 46 + 2, TIME_POS_Y, colon, FONT_COLON_WIDTH, FONT_COLON_HEIGHT, NOINVERT, 0);
 	
-// 	// Draw AM/PM character
-// 	char tmp[2];
-// 	tmp[0] = timeDate.time.ampm;
-// 	tmp[1] = 0x00;
-// 	draw_string(tmp, false, 104, 20);
+	// Draw AM/PM character
+	// char tmp[2];
+	// tmp[0] = timeDate.time.ampm;
+	// tmp[1] = 0x00;
+	// draw_string(tmp, false, 104, 20);
 
-// //	char buff[12];
-// //	sprintf_P(buff, PSTR("%lu"), time_getTimestamp());
-// //	draw_string(buff, false, 30, 50);
+//	char buff[12];
+//	sprintf_P(buff, PSTR("%lu"), time_getTimestamp());
+//	draw_string(buff, false, 30, 50);
 
-// 	return (moving ? DISPLAY_BUSY : DISPLAY_DONE);
+	return (moving ? DISPLAY_BUSY : DISPLAY_DONE);
 }
 
 void Normal::drawTickerNum(tickerData_t* data)
