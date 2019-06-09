@@ -68,6 +68,7 @@ InterruptIn button1(P0_11);
 
 int savedClearDown = -1;
 int _savedFaceCall = -1;
+int _periodCall = -1;
 
 void testClearDownTimerCallback() {
     printf("testClearDownTimerCallback: ENTER\r\n");
@@ -122,13 +123,21 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
 }
 
 void shutdownWatchFace() {
-    printf("shutdownWatchFace\r\n");
+    // printf("timeDiff = %d\r\n", endTime - startTime);
     if (-1 != _savedFaceCall) {
         globalQueue.cancel(_savedFaceCall);
         _savedFaceCall = -1;
         myDisplay.clearDisplay();
         myDisplay.display();
     }
+}
+
+void handleButton1() {
+    // Start displaying the watch face every X milliseconds
+    _savedFaceCall = globalQueue.call_every(75, callback(&face, &Normal::displayWatchFace));
+
+    // Start timer callback for 10 seconds to shutdown the watch face.
+    _periodCall = globalQueue.call_in(10000, callback(&shutdownWatchFace));
 }
 
 void button1Trigger() {
@@ -144,8 +153,13 @@ void button1Trigger() {
     // if (_savedFaceCallShutdown != -1) {
     //     globalQueue.cancel(_savedFaceCall);
     // }
-    _savedFaceCall = globalQueue.call_every(10, callback(&face, &Normal::displayWatchFace));
-    globalQueue.call_in(10000, callback(&shutdownWatchFace));
+    // _savedFaceCall = globalQueue.call_every(100, callback(&face, &Normal::displayWatchFace));
+    // _savedFaceCall = globalQueue.call(callback(&face, &Normal::displayWatchFace));
+    // _periodCall = globalQueue.call_in(10000, callback(&shutdownWatchFace));
+    
+    // Need to queue a call to handle the button as global.call_in() does 
+    // not produce a reliable timed event.
+    globalQueue.call(callback(handleButton1));
 }
 
 void setupButtonCallbacks() {
@@ -172,6 +186,8 @@ int main() {
     myDisplay.clearDisplay();
 
     printf("\r\n PERIPHERAL \r\n\r\n");
+
+    // globalQueue.call_every(1000, callback(every1sec));
 
     // int8_t yPos = 0;
     // while (true) {

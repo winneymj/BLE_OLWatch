@@ -12,23 +12,14 @@ extern time_t timeDate;
 #define TIME_POS_Y	20
 #define TICKER_GAP	4
 
-extern int _savedFaceCall;
-
 Normal::Normal(Draw& display): _display(display), _shutdown(false) {};
 
 void Normal::displayWatchFace() {
-    // while (!_shutdown) {
-        timeDate = time(NULL);
-        display_t busy = draw();
-        _display.display();
-// printf("busy=%d\r\n", busy);
-        // DISPLAY_BUSY : DISPLAY_DONE
-        // wait_ms(300);
-        _display.clearDisplay();
-		// wait_ms(1);
-    // }
-	// // Reset shutdown flag
-	// _shutdown = false;
+	// Grab time
+	timeDate = time(NULL);
+	display_t busy = draw();
+	_display.display();
+	_display.clearDisplay();
 }
 
 void Normal::shutdownDisplay() {
