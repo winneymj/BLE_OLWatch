@@ -7,6 +7,7 @@
 #include "commonUI.h"
 
 extern time_t timeDate;
+extern CommonUI commonUI;
 
 #define TIME_POS_X	1
 #define TIME_POS_Y	20
@@ -35,7 +36,10 @@ display_t Normal::draw() {
 	display_t busy = ticker();
 
 	// Draw battery icon
-	// commonUI.drawBattery();
+	commonUI.drawBattery();
+
+	// Display BLE connection state
+	commonUI.drawBLEState();
 
     // @TODO USB and CHARGING
 
@@ -182,9 +186,10 @@ display_t Normal::ticker() {
 	data.moving = moving2[1];
 	drawTickerNum(&data);
 	
-// 	// Draw colon for half a second
-// 	if(RTC_HALFSEC())
-	// _display.fastDrawBitmap(TIME_POS_X + 46 + 2, TIME_POS_Y, colon, FONT_COLON_WIDTH, FONT_COLON_HEIGHT, NOINVERT, 0);
+	// Draw colon for half a second
+	if(_halfSecond) {
+		_display.fastDrawBitmap(TIME_POS_X + 46 + 2, TIME_POS_Y, colon, FONT_COLON_WIDTH, FONT_COLON_HEIGHT, NOINVERT, 0);
+	}
 	
 	// Draw AM/PM character
 	// char tmp[2];
@@ -197,6 +202,10 @@ display_t Normal::ticker() {
 //	draw_string(buff, false, 30, 50);
 
 	return (moving ? DISPLAY_BUSY : DISPLAY_DONE);
+}
+
+void Normal::halfSecond() {
+	_halfSecond = !_halfSecond;
 }
 
 void Normal::drawTickerNum(tickerData_t* data)

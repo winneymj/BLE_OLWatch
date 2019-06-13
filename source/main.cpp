@@ -32,6 +32,7 @@
 #include "draw.h"
 #include "normal.h"
 #include "resources.h"
+#include "commonUI.h"
 
 // #define PROGMEM
 // #include "FreeMonoBold9pt7b.h"
@@ -63,12 +64,18 @@ Notification notificationDisplay(notificationBuffer, myDisplay);
 // Normal watch face
 Normal face(myDisplay);
 
+CommonUI commonUI(myDisplay);
+
+// BLE Handler
+SMDevicePeripheral peripheral(BLE::Instance(), globalQueue);
+
 // Button Interrupts
 InterruptIn button1(P0_11);
 
 int savedClearDown = -1;
 int _savedFaceCall = -1;
 int _periodCall = -1;
+int _savedColonCall = -1;
 
 void testClearDownTimerCallback() {
     printf("testClearDownTimerCallback: ENTER\r\n");
@@ -76,6 +83,20 @@ void testClearDownTimerCallback() {
     // Close the Notification display
     globalQueue.call(callback(&notificationDisplay, &Notification::close));
     printf("testClearDownTimerCallback: EXIT\r\n");
+}
+
+void shutdownWatchFace() {
+    // printf("timeDiff = %d\r\n", endTime - startTime);
+    if (-1 != _savedFaceCall) {
+        globalQueue.cancel(_savedFaceCall);
+        globalQueue.cancel(_periodCall);
+        globalQueue.cancel(_savedColonCall);
+        _savedFaceCall = -1;
+        _periodCall = -1;
+        _savedColonCall = -1;
+        myDisplay.clearDisplay();
+        myDisplay.display();
+    }
 }
 
 void messageCallback(SharedPtr<uint8_t> bufferPtr) {
@@ -88,6 +109,9 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
 
     // Only push data if we have a subject or body
     if (NULL != msgData->body || NULL != msgData->subject) {
+        // Shutdown the watchface if it is displayed ready to display notification
+        shutdownWatchFace();
+
         // Push to circular buffer
         notificationBuffer.push(msgData);
 
@@ -122,20 +146,22 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
     // notificationBuffer.iterator_close(iterator);
 }
 
-void shutdownWatchFace() {
-    // printf("timeDiff = %d\r\n", endTime - startTime);
+void handleButton1() {
     if (-1 != _savedFaceCall) {
         globalQueue.cancel(_savedFaceCall);
-        _savedFaceCall = -1;
-        myDisplay.clearDisplay();
-        myDisplay.display();
     }
-}
-
-void handleButton1() {
     // Start displaying the watch face every X milliseconds
     _savedFaceCall = globalQueue.call_every(75, callback(&face, &Normal::displayWatchFace));
 
+    if (-1 != _savedColonCall) {
+        globalQueue.cancel(_savedColonCall);
+    }
+    // Start displaying the watch face every 500 milliseconds
+    _savedColonCall = globalQueue.call_every(500, callback(&face, &Normal::halfSecond));
+
+    if (-1 != _periodCall) {
+        globalQueue.cancel(_periodCall);
+    }
     // Start timer callback for 10 seconds to shutdown the watch face.
     _periodCall = globalQueue.call_in(10000, callback(&shutdownWatchFace));
 }
@@ -187,26 +213,9 @@ int main() {
 
     printf("\r\n PERIPHERAL \r\n\r\n");
 
-    // globalQueue.call_every(1000, callback(every1sec));
-
-    // int8_t yPos = 0;
-    // while (true) {
-    //     uint8_t arraySize = (FONT_SMALL2_WIDTH * FONT_SMALL2_HEIGHT) / 8;
-    //     const uint8_t* bitmap = small2Font[0 * arraySize];
-    //     myDisplay.fastDrawBitmap(104, 28, bitmap, 
-    //         FONT_SMALL2_WIDTH, FONT_SMALL2_HEIGHT, NOINVERT, yPos);
-    //     myDisplay.display();
-    //     yPos--;
-    //     wait_ms(700);
-    //     myDisplay.clearDisplay();
-    // printf("ypos=%d\r\n", yPos);
-    // }
+    peripheral.run();
 
     globalQueue.dispatch_forever();
-
-    // BLE& ble = BLE::Instance();
-    // SMDevicePeripheral peripheral(ble, globalQueue);
-    // peripheral.run();
 
     printf("\r\n main: EXIT \r\n\r\n");
     return 0;

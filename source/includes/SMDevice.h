@@ -45,11 +45,8 @@ static const uint8_t DIRECT_WRITE_HEADER_SIZE = 0x03;
 
 #define MAX_BUFFER_SIZE 136
 
-// define the Serial object
-// Serial pc(USBTX, USBRX);
 LEDService *ledServicePtr;
 
-extern Adafruit_SSD1306_Spi display;
 extern void messageCallback(SharedPtr<uint8_t>);
 
 /** Base class for both peripheral and central. The same class that provides
@@ -89,8 +86,8 @@ public:
 
         ble_error_t error;
 
-        /* to show we're running we'll blink every 500ms */
-        _event_queue.call_every(1000, this, &SMDevice::blink);
+        // /* to show we're running we'll blink every 500ms */
+        // _event_queue.call_every(1000, this, &SMDevice::blink);
 
         if (_ble.hasInitialized()) {
             printf("Ble instance already initialised.\r\n");
@@ -110,8 +107,8 @@ public:
             return;
         }
 
-        /* this will not return until shutdown */
-        _event_queue.dispatch_forever();
+        // /* this will not return until shutdown */
+        // _event_queue.dispatch_forever();
 
 #ifdef DEBUG_OUTPUT
         printf("SMDevice:run: EXIT\r\n");
@@ -398,33 +395,33 @@ private:
     }
 
     /** Blink LED to show we're running */
-    void blink(void)
-    {
-        Gap::GapState_t gapState = _ble.gap().getState();
-#ifdef DEBUG_OUTPUT
-        printf("Gap State:Advertising=%s, connected=%s\r\n", gapState.advertising ? "On" : "Off", gapState.connected ? "Yes" : "No");
-#endif
-        // Solid led if advertising
-        if (gapState.advertising) {
-            display.fillCircle(8, 5, 5, WHITE);
-            _led1.write(0);
-        }
-        else if (gapState.connected) {
-            _led1 = !_led1;
-            display.fillCircle(8, 5, 5, _led1 ? BLACK : WHITE);
-        }
+//     void blink(void)
+//     {
+//         Gap::GapState_t gapState = _ble.gap().getState();
+// #ifdef DEBUG_OUTPUT
+//         printf("Gap State:Advertising=%s, connected=%s\r\n", gapState.advertising ? "On" : "Off", gapState.connected ? "Yes" : "No");
+// #endif
+//         // Solid led if advertising
+//         if (gapState.advertising) {
+//             display.fillCircle(8, 5, 5, WHITE);
+//             _led1.write(0);
+//         }
+//         else if (gapState.connected) {
+//             _led1 = !_led1;
+//             display.fillCircle(8, 5, 5, _led1 ? BLACK : WHITE);
+//         }
 
-        display.display(); // Update screen with each newly-drawn rectangle
-//----------------------------------------
-        // display.clearDisplay();
+//         display.display(); // Update screen with each newly-drawn rectangle
+// //----------------------------------------
+//         // display.clearDisplay();
 
-        // for(int16_t i=0; i<display.height()/2; i+=2) {
-        //     display.drawRect(i, i, display.width()-2*i, display.height()-2*i, WHITE);
-        //     display.display(); // Update screen with each newly-drawn rectangle
-        //     wait_ms(1);
-        // }
-//----------------------------------------
-    };
+//         // for(int16_t i=0; i<display.height()/2; i+=2) {
+//         //     display.drawRect(i, i, display.width()-2*i, display.height()-2*i, WHITE);
+//         //     display.display(); // Update screen with each newly-drawn rectangle
+//         //     wait_ms(1);
+//         // }
+// //----------------------------------------
+//     };
 
 private:
     DigitalOut _led1;

@@ -24,10 +24,12 @@ public:
     display_t draw();
 	void displayWatchFace();
 	void shutdownDisplay();
+	void halfSecond();
 
 private:
 	Draw& _display;
 	bool _shutdown;
+	bool _halfSecond;
 
     void drawDate();
     display_t ticker();

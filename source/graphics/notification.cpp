@@ -88,7 +88,7 @@ void Notification::close() {
     printf("close: ENTER\r\n");
 
     _display.clearDisplay();
-    // _display.clearDisplay();
+    _display.display();
     _state = CLOSED;
     if (NULL != _scrollIterator) {
         _notificationBuffer.iterator_close(_scrollIterator);

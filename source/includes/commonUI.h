@@ -10,6 +10,8 @@ class CommonUI {
 public:
     CommonUI(Draw& display);
     void drawBattery();
+    void drawBLEState();
+    
 private:
     Draw& _display;
 };
