@@ -71,15 +71,19 @@ SMDevicePeripheral peripheral(BLE::Instance(), globalQueue);
 
 // Button Interrupts
 InterruptIn button1(P0_11);
+// To Use P0_9 & P0_10 which are NFC allocated need to
+// allow them to be used as GPIO by setting symbol
+// CONFIG_NFCT_PINS_AS_GPIOS in the mbed_app.json
+InterruptIn button2(P0_9);
 
-int savedClearDown = -1;
+int _savedClearDown = -1;
 int _savedFaceCall = -1;
 int _periodCall = -1;
 int _savedColonCall = -1;
 
 void testClearDownTimerCallback() {
     printf("testClearDownTimerCallback: ENTER\r\n");
-    savedClearDown = -1;
+    _savedClearDown = -1;
     // Close the Notification display
     globalQueue.call(callback(&notificationDisplay, &Notification::close));
     printf("testClearDownTimerCallback: EXIT\r\n");
@@ -89,18 +93,22 @@ void shutdownWatchFace() {
     // printf("timeDiff = %d\r\n", endTime - startTime);
     if (-1 != _savedFaceCall) {
         globalQueue.cancel(_savedFaceCall);
-        globalQueue.cancel(_periodCall);
-        globalQueue.cancel(_savedColonCall);
         _savedFaceCall = -1;
-        _periodCall = -1;
-        _savedColonCall = -1;
-        myDisplay.clearDisplay();
-        myDisplay.display();
     }
+    if (-1 != _periodCall) {
+        globalQueue.cancel(_periodCall);
+        _periodCall = -1;
+    }
+    if (-1 != _savedColonCall) {
+        globalQueue.cancel(_savedColonCall);
+        _savedColonCall = -1;
+    }
+    myDisplay.clearDisplay();
+    myDisplay.display();
 }
 
 void messageCallback(SharedPtr<uint8_t> bufferPtr) {
-    // printf("messageCallback: ENTER, bufferPtr=%s\r\n", bufferPtr.get());
+    printf("messageCallback: ENTER, bufferPtr=%s\r\n", bufferPtr.get());
     // Make sure UTF8 chars are convertes as best as possible to ASCII
     DataFormat::utf8ToAscii(bufferPtr);
 
@@ -119,10 +127,10 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
         globalQueue.call(callback(&notificationDisplay, &Notification::displayCurrent));
 
         // Clear down after X seconds
-        if (savedClearDown != -1) {
-            globalQueue.cancel(savedClearDown);
+        if (_savedClearDown != -1) {
+            globalQueue.cancel(_savedClearDown);
         }
-        savedClearDown = globalQueue.call_in(5000, callback(&testClearDownTimerCallback));
+        _savedClearDown = globalQueue.call_in(5000, callback(&testClearDownTimerCallback));
     }
 
     // display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
@@ -147,34 +155,49 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
 }
 
 void handleButton1() {
-    if (-1 != _savedFaceCall) {
-        globalQueue.cancel(_savedFaceCall);
-    }
-    // Start displaying the watch face every X milliseconds
+    shutdownWatchFace();
+
+    // if (-1 != _savedFaceCall) {
+    //     globalQueue.cancel(_savedFaceCall);
+    // }
+    // // Start displaying the watch face every X milliseconds
     _savedFaceCall = globalQueue.call_every(75, callback(&face, &Normal::displayWatchFace));
 
-    if (-1 != _savedColonCall) {
-        globalQueue.cancel(_savedColonCall);
-    }
-    // Start displaying the watch face every 500 milliseconds
+    // if (-1 != _savedColonCall) {
+    //     globalQueue.cancel(_savedColonCall);
+    // }
+    // // Start displaying the time colon 500 milliseconds
     _savedColonCall = globalQueue.call_every(500, callback(&face, &Normal::halfSecond));
 
-    if (-1 != _periodCall) {
-        globalQueue.cancel(_periodCall);
-    }
+    // if (-1 != _periodCall) {
+    //     globalQueue.cancel(_periodCall);
+    // }
     // Start timer callback for 10 seconds to shutdown the watch face.
+    _periodCall = globalQueue.call_in(10000, callback(&shutdownWatchFace));
+}
+
+void handleButton2() {
+    printf("handleButton2\r\n");
+
+    // Clear the watchface if displayed
+    shutdownWatchFace();
+
+    // Display the notifications if any.
+    globalQueue.call(callback(&notificationDisplay, &Notification::displayCurrent));
+
+    // Start timer callback for 10 seconds to shutdown the notification.
     _periodCall = globalQueue.call_in(10000, callback(&shutdownWatchFace));
 }
 
 void button1Trigger() {
     // If multiple clicks do not and the clear down
     // has not run then cancel the clear down.
-    // if (savedClearDown != -1) {
-    //     globalQueue.cancel(savedClearDown);
+    // if (_ savedClearDown != -1) {
+    //     globalQueue.cancelsavedClearDown);
     // }
     // call the Notification scrollUp
     // globalQueue.call(callback(&notificationDisplay, &Notification::scrollUp));
-    // savedClearDown = globalQueue.call_in(5000, callback(&testClearDownTimerCallback));
+    // _ savedClearDown = globalQueue.call_in(5000, callback(&testClearDownTimerCallback));
 
     // if (_savedFaceCallShutdown != -1) {
     //     globalQueue.cancel(_savedFaceCall);
@@ -188,10 +211,34 @@ void button1Trigger() {
     globalQueue.call(callback(handleButton1));
 }
 
+void button2Trigger() {
+    // Need to queue a call to handle the button as global.call_in() does 
+    // not produce a reliable timed event.
+    globalQueue.call(callback(handleButton2));
+}
+
+
+void dummyMessages() {
+
+    char *msgData = "com.android.vending||Checking for system and security updates|Checking for system and security updates";
+
+printf("dummyMessages:strlen(msgData)=%d\r\n", strlen(msgData));
+
+    SharedPtr<uint8_t> bufferPtr((uint8_t *)malloc(strlen(msgData) + 1));
+    memcpy(bufferPtr.get(), msgData, strlen(msgData));
+    bufferPtr.get()[strlen(msgData)] = 0; // Null last byte
+
+    messageCallback(bufferPtr);
+}
+
 void setupButtonCallbacks() {
     button1.fall(callback(&button1Trigger));
     button1.mode(PullUp);
     button1.enable_irq();
+
+    button2.fall(callback(&button2Trigger));
+    button2.mode(PullUp);
+    button2.enable_irq();
 }
 
 int main() {
@@ -210,6 +257,9 @@ int main() {
     wait_ms(2000); // Pause for 2 seconds
     // Clear the buffer
     myDisplay.clearDisplay();
+
+    // Place dummy notifications...remove once tested
+    dummyMessages();
 
     printf("\r\n PERIPHERAL \r\n\r\n");
 

@@ -1,5 +1,9 @@
 
 #include <mbed.h>
+#define PROGMEM
+#include "Adafruit_GFX\gfxfont.h"
+//#include "Adafruit_GFX\fonts\FreeSans9pt7b.h"
+#include "source\fonts\FreeSans6pt7b.h"
 #include "notification.h"
 
 Notification::Notification(NotificationBuffer& buf, Draw& display): 
@@ -10,9 +14,10 @@ void Notification::display(NotificationBuffer::iterator_t& iterator) {
     _display.clearDisplay();
 
     // display.fillRect(0, 10, display.width(), display.height() - 10, BLACK); // Clear display
+    _display.setFont(&FreeSans6pt7b);
     // _display.setTextSize(_textSize);            // Normal 1:1 pixel scale
-    // _display.setTextColour(_textColour);        // Draw white text
-    // _display.setCursor(0, 10);             // Start at top-left corner
+    _display.setTextColour(_textColour);        // Draw white text
+    _display.setCursor(0, 10);             // Start at top-left corner
 
     // Iterator should be open before call to here
     SharedPtr<MessageData> msgData;
@@ -54,6 +59,8 @@ void Notification::scrollUp() {
             if (MBED_SUCCESS == _notificationBuffer.iterator_open(&_scrollIterator)) {
                 printf("scrollUp: iterator_open\r\n");
                 display(_scrollIterator);
+            } else {
+                printf("scrollUp: iterator_open != MBED_SUCCESS\r\n");
             }
         } else {
             // Must be already displaying notification
@@ -79,8 +86,10 @@ void Notification::displayCurrent() {
     SharedPtr<MessageData> msgData;
     if (MBED_SUCCESS == _notificationBuffer.iterator_open(&iterator)) {
         display(iterator);
-        _notificationBuffer.iterator_close(iterator);
+    } else {
+        printf("displayCurrent(): iterator_open != MBED_SUCCESS\r\n");
     }
+    _notificationBuffer.iterator_close(iterator);
     printf("displayCurrent: EXIT\r\n");
 }
 

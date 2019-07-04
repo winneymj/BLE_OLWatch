@@ -52,6 +52,7 @@ void Normal::drawDate() {
 	char buff[32] = {0};
     strftime(buff, 32, "%a, %b %e, %Y", localtime(&timeDate));	
 
+    _display.setFont(NULL);
     _display.setTextSize(1);
     _display.setTextColour(WHITE);
 	_display.drawString(buff, false, 12, 0);

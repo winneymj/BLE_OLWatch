@@ -4,6 +4,11 @@
             "help": "The first configuration parameter",
             "macro_name": "COMPILE_ANIMATIONS",
             "value": 1
+        },
+        "param2": {
+            "help": "The first configuration parameter",
+            "macro_name": "CONFIG_NFCT_PINS_AS_GPIOS",
+            "value": 1
         }
     }
 }
