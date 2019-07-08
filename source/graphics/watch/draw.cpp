@@ -8,7 +8,21 @@
 extern uint8_t animation_offsetY();
 
 void Draw::drawString(char* string, bool invert, int16_t x, int16_t y) {
-    setCursor(x, y);
+	_rectX = x;
+	_rectY = y;
+	_rectW = _width;
+	_rectH = _height;
+    // setCursor(x, y);
+    printf(string);
+}
+
+void Draw::drawString(char* string, bool invert, int16_t x, int16_t y, int16_t w, int16_t h) {
+	_rectX = x;
+	_rectY = y;
+	_rectW = w;
+	_rectH = h;
+    // setCursor(x, y);
+
     printf(string);
 }
 
@@ -107,3 +121,67 @@ void Draw::fastDrawBitmap(uint8_t x, uint8_t yy, const uint8_t* bitmap, uint8_t 
 		}
 	}
 }
+
+/**************************************************************************/
+/*!
+  @brief  Print one byte/character of data, used to support print()
+   This has been overriden from the Adafruit_GFX so that I can handle
+   Text areas using a rect(x, y, w, h) instead of setting the x to zero and
+   the width being the width of the display.  If I can be clever I will also
+   attempt to place a '...' at the end of the string if it is too long for
+   the text area.  Not sure if possible though right now.
+  @param  c       The 8-bit ascii character to write
+*/
+/**************************************************************************/
+size_t Draw::writeChar(uint8_t c)
+{
+  if(!gfxFont)                      // 'Classic' built-in font
+  {
+    if(c == '\n')                   // Newline?
+    {
+      _rectX  = 0;                // Reset x to zero,
+      _rectY += textsize * 8;     // advance y one line
+    }
+    else if(c != '\r')              // Ignore carriage returns
+    {
+      if(wrap && ((cursor_x+textsize*6) > _rectW))
+      {
+        _rectX  = 0;              // Reset x to zero,
+        _rectY += textsize * 8;   // advance y one line
+      }
+      drawChar(_rectX, _rectY, c, textcolour, textbgcolour, textsize);
+      _rectX += textsize * 6;     // Advance x one char
+    }
+  }
+  else                              // Custom font
+  {
+    if(c == '\n')
+    {
+      _rectX  = 0;
+      _rectY += textsize * gfxFont->yAdvance;
+    }
+    else if(c != '\r')
+    {
+      uint8_t first = gfxFont->first;
+
+      if((c >= first) && (c <= gfxFont->last))
+      {
+        GFXglyph *glyph = (GFXglyph *) &gfxFont->glyph[c-first];
+        uint8_t w = glyph->width, h = glyph->height;
+        if((w > 0) && (h > 0))
+        { // Is there an associated bitmap?
+          int16_t xo = glyph->xOffset; // sic
+          if(wrap && ((_rectX+textsize*(xo+w)) > _rectW))
+          {
+            _rectX  = 0;
+            _rectY += textsize*gfxFont->yAdvance;
+          }
+          drawChar(_rectX, _rectY, c, textcolour, textbgcolour, textsize);
+        }
+        _rectX += glyph->xAdvance * textsize;
+      }
+    }
+  }
+  return 1;
+}
+

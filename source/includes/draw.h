@@ -10,9 +10,16 @@ public:
     // ctor
     Draw(SPI &spi, PinName dc, PinName rst, PinName cs, uint8_t w, uint8_t h): Adafruit_SSD1306_Spi(spi, dc, rst, cs, w, h) {};
     void drawString(char* string, bool invert, int16_t x, int16_t y);
+    void drawString(char* string, bool invert, int16_t x, int16_t y, int16_t w, int16_t h);
     void fastDrawBitmap(uint8_t x, uint8_t yy, const uint8_t* bitmap, uint8_t w, uint8_t h, bool invert, int8_t offsetY);
 
+    virtual size_t writeChar(uint8_t);
+
 private:
+    int16_t _rectX;
+    int16_t _rectY;
+    int16_t _rectW;
+    int16_t _rectH;
 };
 
 #endif

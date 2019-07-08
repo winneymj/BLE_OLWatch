@@ -17,19 +17,19 @@ void Notification::display(NotificationBuffer::iterator_t& iterator) {
     _display.setFont(&FreeSans6pt7b);
     // _display.setTextSize(_textSize);            // Normal 1:1 pixel scale
     _display.setTextColour(_textColour);        // Draw white text
-    _display.setCursor(0, 10);             // Start at top-left corner
+    // _display.setCursor(32, 10);             // Start at top-left corner
 
     // Iterator should be open before call to here
     SharedPtr<MessageData> msgData;
     // Get next item of buffer to display
     if (MBED_SUCCESS == _notificationBuffer.iterator_next(iterator, msgData)) {
         // _display.printf(msgData->subject.get());
-        _display.drawString(msgData->subject.get(), false, 0, 10);
+        _display.drawString(msgData->subject.get(), false, 64, 10, 128, 64);
         printf("msgData->subject%s\r\n", msgData->subject.get());
     } else {
         // Nothing left in buffer
         // _display.printf("No more notifications");
-        _display.drawString("No more notifications", false, 0, 10);
+        _display.drawString("No more notifications", false, 0, 10, 128, 64);
     }
 
     _display.display();
