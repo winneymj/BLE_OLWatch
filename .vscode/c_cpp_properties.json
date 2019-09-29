@@ -5,6 +5,7 @@
                 "${workspaceFolder}",
                 "${workspaceFolder}/Adafruit_GFX",
                 "${workspaceFolder}/Adafruit_GFX/fonts",
+                "${workspaceFolder}/LIS3DH",
                 "${workspaceFolder}/mbed-os",
                 "${workspaceFolder}/mbed-os/cmsis",
                 "${workspaceFolder}/mbed-os/cmsis/TARGET_CORTEX_M",

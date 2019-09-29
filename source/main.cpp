@@ -25,6 +25,8 @@
 #include "SMDevice.h"
 #include "Adafruit_GFX.h"
 #include "Adafruit_SSD1306.h"
+#include "LIS3DH.h"
+
 #include "dataFormat.h"
 #include "typedefs.h"
 #include "CircBuffer.h"
@@ -53,10 +55,19 @@ extern time_t timeDate;
 // define the Serial object
 // Serial pc(USBTX, USBRX);
 SPI mySPI(SPI_PSELMOSI0, NC, SPI_PSELSCK0, NC);
+
+// I2C for accelerometer LIS3DH
+I2C myI2C(P0_5, P0_4);
+
 // Adafruit_SSD1306_Spi *display;
 // Adafruit_SSD1306_Spi display(mySPI, P0_16, P0_17, P0_14 , 128, 64);
 Draw myDisplay(mySPI, P0_16, P0_17, P0_14 , 128, 64);
 events::EventQueue globalQueue;
+
+// LIS3DH
+#define LIS3DH_DEFAULT_ADDRESS (0x18)
+LIS3DH myAccel (myI2C, LIS3DH_DEFAULT_ADDRESS);
+
 // Circular buffer to hold history or messages
 NotificationBuffer notificationBuffer;
 Notification notificationDisplay(notificationBuffer, myDisplay);
@@ -125,6 +136,16 @@ void pulseVibrationMotor() {
     globalQueue.call_in(PULSE_WIDTH_PERIOD_MS, callback(stopVibMotor));
     // globalQueue.call_in(PULSE_WIDTH_PERIOD_MS * 2, callback(startVibMotor));
     // globalQueue.call_in(PULSE_WIDTH_PERIOD_MS * 3, callback(stopVibMotor));
+}
+
+void readAccellXYZ(/*float* x, float* y, float* z*/) {
+    float data[3];
+    myAccel.read_data(data);
+    // *x = data[0];
+    // *y = data[1];
+    // *z = data[2];
+
+    printf("readAccellXYZ, x=%f, y=%f, z=%f\r\n", data[0], data[1], data[2]);
 }
 
 void messageCallback(SharedPtr<uint8_t> bufferPtr) {
@@ -283,6 +304,8 @@ int main() {
 
     // Place dummy notifications...remove once tested
     globalQueue.call_in(3000, callback(&dummyMessages));
+    // float x, y, z;
+    globalQueue.call_every(2000, callback(&readAccellXYZ));
 
     printf("\r\n PERIPHERAL \r\n\r\n");
 
