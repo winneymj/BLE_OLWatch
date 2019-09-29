@@ -76,6 +76,9 @@ InterruptIn button1(P0_11);
 // CONFIG_NFCT_PINS_AS_GPIOS in the mbed_app.json
 InterruptIn button2(P0_9);
 
+// Vibration Motor P0_13
+PwmOut vibMotor(P0_13);
+
 int _savedClearDown = -1;
 int _savedFaceCall = -1;
 int _periodCall = -1;
@@ -105,6 +108,23 @@ void shutdownWatchFace() {
     }
     myDisplay.clearDisplay();
     myDisplay.display();
+}
+
+void startVibMotor() {
+    vibMotor.write(0.3f);
+}
+
+void stopVibMotor() {
+    vibMotor.write(1.0f);
+}
+
+#define PULSE_WIDTH_PERIOD_MS 400
+
+void pulseVibrationMotor() {
+    globalQueue.call(callback(startVibMotor));
+    globalQueue.call_in(PULSE_WIDTH_PERIOD_MS, callback(stopVibMotor));
+    // globalQueue.call_in(PULSE_WIDTH_PERIOD_MS * 2, callback(startVibMotor));
+    // globalQueue.call_in(PULSE_WIDTH_PERIOD_MS * 3, callback(stopVibMotor));
 }
 
 void messageCallback(SharedPtr<uint8_t> bufferPtr) {
@@ -152,7 +172,11 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
     //     }
     // }
     // notificationBuffer.iterator_close(iterator);
+    
+    pulseVibrationMotor();
 }
+
+float dutyCycle = 0.0f;
 
 void handleButton1() {
     shutdownWatchFace();
@@ -217,7 +241,6 @@ void button2Trigger() {
     globalQueue.call(callback(handleButton2));
 }
 
-
 void dummyMessages() {
 
     char *msgData = "com.android.vending||Checking for system and security updates|Checking for system and security updates";
@@ -259,7 +282,7 @@ int main() {
     myDisplay.clearDisplay();
 
     // Place dummy notifications...remove once tested
-    dummyMessages();
+    globalQueue.call_in(3000, callback(&dummyMessages));
 
     printf("\r\n PERIPHERAL \r\n\r\n");
 

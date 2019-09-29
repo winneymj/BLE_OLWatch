@@ -24,7 +24,8 @@ void Notification::display(NotificationBuffer::iterator_t& iterator) {
     // Get next item of buffer to display
     if (MBED_SUCCESS == _notificationBuffer.iterator_next(iterator, msgData)) {
         // _display.printf(msgData->subject.get());
-        _display.drawString(msgData->subject.get(), false, 64, 10, 128, 64);
+        // _display.drawRect(64, 10, 64, 32, _textColour);
+        _display.drawString(msgData->subject.get(), false, 64, 10, 64, 28);
         printf("msgData->subject%s\r\n", msgData->subject.get());
     } else {
         // Nothing left in buffer

@@ -12,17 +12,27 @@ void Draw::drawString(char* string, bool invert, int16_t x, int16_t y) {
 	_rectY = y;
 	_rectW = _width;
 	_rectH = _height;
-    // setCursor(x, y);
+    setCursor(x, y);
     printf(string);
 }
 
 void Draw::drawString(char* string, bool invert, int16_t x, int16_t y, int16_t w, int16_t h) {
 	_rectX = x;
 	_rectY = y;
-	_rectW = w;
-	_rectH = h;
-    // setCursor(x, y);
+	// Make sure _rectX + _rectW is not greater than _width and clamp 
+	if ((_rectX + _rectW) > _width) {
+		_rectW = _width - _rectX;
+	} else {
+		_rectW = w;
+	}
 
+	// Make sure _rectY + _rectW is not greater than _width and clamp 
+	if ((_rectY + _rectH) > _height) {
+		_rectY = _height - _rectY;
+	} else {
+		_rectH = h;
+	}
+    setCursor(x, y);
     printf(string);
 }
 
@@ -139,26 +149,26 @@ size_t Draw::writeChar(uint8_t c)
   {
     if(c == '\n')                   // Newline?
     {
-      _rectX  = 0;                // Reset x to zero,
-      _rectY += textsize * 8;     // advance y one line
+      cursor_x = _rectX;            // Reset x to zero,
+      cursor_y += textsize * 8;     // advance y one line
     }
     else if(c != '\r')              // Ignore carriage returns
     {
-      if(wrap && ((cursor_x+textsize*6) > _rectW))
+      if(wrap && ((cursor_x + textsize * 6) > _rectX + _rectW))
       {
-        _rectX  = 0;              // Reset x to zero,
-        _rectY += textsize * 8;   // advance y one line
+        cursor_x = _rectX;        // Reset x to zero,
+        cursor_y += textsize * 8;   // advance y one line
       }
-      drawChar(_rectX, _rectY, c, textcolour, textbgcolour, textsize);
-      _rectX += textsize * 6;     // Advance x one char
+      drawChar(cursor_x, cursor_y, c, textcolour, textbgcolour, textsize);
+      cursor_x += textsize * 6;     // Advance x one char
     }
   }
   else                              // Custom font
   {
     if(c == '\n')
     {
-      _rectX  = 0;
-      _rectY += textsize * gfxFont->yAdvance;
+      cursor_x = _rectX;
+      cursor_y += textsize * gfxFont->yAdvance;
     }
     else if(c != '\r')
     {
@@ -166,19 +176,27 @@ size_t Draw::writeChar(uint8_t c)
 
       if((c >= first) && (c <= gfxFont->last))
       {
-        GFXglyph *glyph = (GFXglyph *) &gfxFont->glyph[c-first];
+        GFXglyph *glyph = (GFXglyph *) &gfxFont->glyph[c - first];
         uint8_t w = glyph->width, h = glyph->height;
         if((w > 0) && (h > 0))
         { // Is there an associated bitmap?
           int16_t xo = glyph->xOffset; // sic
-          if(wrap && ((_rectX+textsize*(xo+w)) > _rectW))
+          if(wrap && ((cursor_x + textsize*(xo + w)) > _rectX + _rectW))
           {
-            _rectX  = 0;
-            _rectY += textsize*gfxFont->yAdvance;
+            cursor_x = _rectX;
+            cursor_y += textsize * gfxFont->yAdvance;
           }
-          drawChar(_rectX, _rectY, c, textcolour, textbgcolour, textsize);
+		  // See if cursor y is outside the height
+		  if (cursor_y <= (_rectY + _rectH)) {
+// std::printf("IN  cursor_y=%d\n\r", cursor_y);
+// std::printf("gfxFont->yAdvance=%d\n\r", gfxFont->yAdvance);
+			// Guess move down as gfxFont->yAdvance / 2
+			drawChar(cursor_x, cursor_y + (gfxFont->yAdvance / 2), c, textcolour, textbgcolour, textsize);
+		  } else {
+// std::printf("OUT cursor_y=%d\n\r", cursor_y);
+		  }
         }
-        _rectX += glyph->xAdvance * textsize;
+        cursor_x += glyph->xAdvance * textsize;
       }
     }
   }
