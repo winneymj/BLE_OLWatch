@@ -57,7 +57,7 @@ extern time_t timeDate;
 SPI mySPI(SPI_PSELMOSI0, NC, SPI_PSELSCK0, NC);
 
 // I2C for accelerometer LIS3DH
-I2C myI2C(P0_5, P0_4);
+I2C myI2C(P0_7, P0_8);
 
 // Adafruit_SSD1306_Spi *display;
 // Adafruit_SSD1306_Spi display(mySPI, P0_16, P0_17, P0_14 , 128, 64);
@@ -65,7 +65,7 @@ Draw myDisplay(mySPI, P0_16, P0_17, P0_14 , 128, 64);
 events::EventQueue globalQueue;
 
 // LIS3DH
-#define LIS3DH_DEFAULT_ADDRESS (0x18)
+#define LIS3DH_DEFAULT_ADDRESS (0x32)
 LIS3DH myAccel (myI2C, LIS3DH_DEFAULT_ADDRESS);
 
 // Circular buffer to hold history or messages
@@ -138,13 +138,28 @@ void pulseVibrationMotor() {
     // globalQueue.call_in(PULSE_WIDTH_PERIOD_MS * 3, callback(stopVibMotor));
 }
 
+void scanI2C() {
+    printf("ENTER: scanI2C()\r\n");
+    myI2C.frequency(100000);
+
+    uint8_t address;
+    char dt[2];
+    for (address = 1; address < 127; address++ ) {
+        dt[0] = LIS3DH_WHO_AM_I;
+        myI2C.write(address, dt, 1, true);
+        myI2C.read(address, dt, 1,  false);
+        printf("scanI2C(), address=0x%X, dt[0]=0x%X\r\n", address, dt[0]);
+    }
+}
+
 void readAccellXYZ(/*float* x, float* y, float* z*/) {
     float data[3];
     myAccel.read_data(data);
     // *x = data[0];
     // *y = data[1];
     // *z = data[2];
-
+    uint8_t id = myAccel.read_id();
+    // printf("readAccellXYZ, x=0x%X\r\n", id);
     printf("readAccellXYZ, x=%f, y=%f, z=%f\r\n", data[0], data[1], data[2]);
 }
 
@@ -304,8 +319,11 @@ int main() {
 
     // Place dummy notifications...remove once tested
     globalQueue.call_in(3000, callback(&dummyMessages));
-    // float x, y, z;
-    globalQueue.call_every(2000, callback(&readAccellXYZ));
+
+    // Test Accel
+    globalQueue.call_every(1000, callback(&readAccellXYZ));
+
+    // globalQueue.call_in(5000, callback(&scanI2C));
 
     printf("\r\n PERIPHERAL \r\n\r\n");
 
