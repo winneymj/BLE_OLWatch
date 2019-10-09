@@ -59,14 +59,13 @@ SPI mySPI(SPI_PSELMOSI0, NC, SPI_PSELSCK0, NC);
 // I2C for accelerometer LIS3DH
 I2C myI2C(P0_7, P0_8);
 
-// Adafruit_SSD1306_Spi *display;
-// Adafruit_SSD1306_Spi display(mySPI, P0_16, P0_17, P0_14 , 128, 64);
+// Display
 Draw myDisplay(mySPI, P0_16, P0_17, P0_14 , 128, 64);
 events::EventQueue globalQueue;
 
 // LIS3DH
 #define LIS3DH_DEFAULT_ADDRESS (0x32)
-LIS3DH myAccel (myI2C, LIS3DH_DEFAULT_ADDRESS);
+LIS3DH myAccel(myI2C, LIS3DH_DEFAULT_ADDRESS);
 
 // Circular buffer to hold history or messages
 NotificationBuffer notificationBuffer;
@@ -90,10 +89,19 @@ InterruptIn button2(P0_9);
 // Vibration Motor P0_13
 PwmOut vibMotor(P0_13);
 
+// Accelerator interrupt pins
+InterruptIn myAccel_int1(P0_12);
+InterruptIn myAccel_int2(P0_6);
+
 int _savedClearDown = -1;
 int _savedFaceCall = -1;
 int _periodCall = -1;
 int _savedColonCall = -1;
+
+// Adjust this number for the sensitivity of the 'click' force
+// this strongly depend on the range! for 16G, try 5-10
+// for 8G, try 10-20. for 4G try 20-40. for 2G try 40-80
+#define CLICKTHRESHHOLD 5
 
 void testClearDownTimerCallback() {
     printf("testClearDownTimerCallback: ENTER\r\n");
@@ -140,7 +148,7 @@ void pulseVibrationMotor() {
 
 void scanI2C() {
     printf("ENTER: scanI2C()\r\n");
-    myI2C.frequency(100000);
+    // myI2C.frequency(100000);
 
     uint8_t address;
     char dt[2];
@@ -154,7 +162,7 @@ void scanI2C() {
 
 void readAccellXYZ(/*float* x, float* y, float* z*/) {
     float data[3];
-    myAccel.read_data(data);
+    myAccel.read_mg_data(data);
     // *x = data[0];
     // *y = data[1];
     // *z = data[2];
@@ -277,6 +285,18 @@ void button2Trigger() {
     globalQueue.call(callback(handleButton2));
 }
 
+void printIt() {
+    printf("Got INT\r\n");
+}
+
+void accelInt1Trigger() {
+    globalQueue.call(callback(&printIt));
+}
+
+void accelInt2Trigger() {
+    globalQueue.call(callback(&printIt));
+}
+
 void dummyMessages() {
 
     char *msgData = "com.android.vending||Checking for system and security updates|Checking for system and security updates";
@@ -300,6 +320,75 @@ void setupButtonCallbacks() {
     button2.enable_irq();
 }
 
+/*!
+ *   @brief  Set INT to output for single or double click
+ *   @param  c
+ *			    0 = turn off I1_CLICK
+ *              1 = turn on all axes & singletap
+ *				2 = turn on all axes & doubletap
+ *   @param  clickthresh
+ *           CLICK threshold value
+ *   @param  timelimit
+ *           sets time limit (default 10)
+ *   @param  timelatency
+ *   				 sets time latency (default 20)
+ *   @param  timewindow
+ *   				 sets time window (default 255)
+ */
+void setClick(uint8_t c, uint8_t clickthresh,
+                uint8_t timelimit = 10, uint8_t timelatency = 20,
+                uint8_t timewindow = 255) {
+    if (!c) {
+        // disable int
+        uint8_t r = myAccel.read_reg(LIS3DH_CTRL_REG3);
+        r &= ~(0x80); // turn off I1_CLICK
+        myAccel.write_reg(LIS3DH_CTRL_REG3, r);
+        myAccel.write_reg(LIS3DH_CLICK_CFG, 0);
+        return;
+    }
+    // else...
+
+    myAccel.write_reg(LIS3DH_CTRL_REG3, 0x80); // turn on int1 click
+    myAccel.write_reg(LIS3DH_CTRL_REG5, 0x08); // latch interrupt on int1
+
+    if (c == 1)
+        myAccel.write_reg(LIS3DH_CLICK_CFG, 0x15); // turn on all axes & singletap
+    if (c == 2)
+        myAccel.write_reg(LIS3DH_CLICK_CFG, 0x2A); // turn on all axes & doubletap
+
+    myAccel.write_reg(LIS3DH_CLICK_THS, clickthresh);    // arbitrary
+    myAccel.write_reg(LIS3DH_TIME_LIMIT, timelimit);     // arbitrary
+    myAccel.write_reg(LIS3DH_TIME_LATENCY, timelatency); // arbitrary
+    myAccel.write_reg(LIS3DH_TIME_WINDOW, timewindow);   // arbitrary
+}
+
+// /*!
+//  *   @brief  Get uint8_t for single or double click
+//  *   @return register LIS3DH_REG_CLICKSRC
+//  */
+// uint8_t getClick() {
+//   uint8_t result = myAccel.read_reg(LIS3DH_CLICK_SRC);
+//   printf("getClick=%d\n\r", result);
+//   uint8_t int1_read = myAccel_int1.read();
+//   printf("int1_read=%d\n\r", int1_read);
+// }
+
+void setupAccel() {
+    myAccel_int1.rise(callback(&accelInt1Trigger));
+    myAccel_int1.mode(PullUp);
+    myAccel_int1.enable_irq();
+
+    myAccel_int2.rise(callback(&accelInt2Trigger));
+    myAccel_int2.mode(PullUp);
+    myAccel_int2.enable_irq();
+
+    // 0 = turn off click detection & interrupt
+    // 1 = single click only interrupt output
+    // 2 = double click only interrupt output, detect single click
+    // Adjust threshhold, higher numbers are less sensitive
+    setClick(2, CLICKTHRESHHOLD);
+}
+
 int main() {
     printf("\r\n main: ENTER \r\n\r\n");
 
@@ -307,6 +396,9 @@ int main() {
 
     // Setup buttons
     setupButtonCallbacks();
+
+    // Setup Accelerator
+    setupAccel();
 
     // Show initial display buffer contents on the screen --
     // the library initializes this with an Adafruit splash screen.
@@ -323,6 +415,8 @@ int main() {
     // Test Accel
     globalQueue.call_every(1000, callback(&readAccellXYZ));
 
+    // globalQueue.call_every(1000, callback(&getClick));
+    
     // globalQueue.call_in(5000, callback(&scanI2C));
 
     printf("\r\n PERIPHERAL \r\n\r\n");
