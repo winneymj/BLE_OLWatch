@@ -23,8 +23,11 @@
 #include "SecurityManager.h"
 #include "LEDService.h"
 #include "SMDevice.h"
+
+#include "lvgl/lvgl.h"
 #include "Adafruit_GFX.h"
 #include "Adafruit_SSD1306.h"
+
 #include "LIS3DH.h"
 
 #include "dataFormat.h"
