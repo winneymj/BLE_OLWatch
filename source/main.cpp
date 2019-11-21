@@ -24,7 +24,6 @@
 #include "LEDService.h"
 #include "SMDevice.h"
 
-#include "lvgl/lvgl.h"
 #include "Adafruit_GFX.h"
 #include "Adafruit_SSD1306.h"
 

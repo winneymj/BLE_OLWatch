@@ -94,8 +94,8 @@ public:
 
 protected:
   void charBounds(char c, int16_t *x, int16_t *y, int16_t *minx, int16_t *miny, int16_t *maxx, int16_t *maxy);
-  const int16_t WIDTH;  ///< This is the 'raw' display width - never changes
-  const int16_t HEIGHT; ///< This is the 'raw' display height - never changes
+  int16_t WIDTH;        ///< This is the 'raw' display width - never changes
+  int16_t HEIGHT;       ///< This is the 'raw' display height - never changes
   int16_t _width;       ///< Display width as modified by current rotation
   int16_t _height;      ///< Display height as modified by current rotation
   int16_t cursor_x;     ///< x location to start print()ing text
