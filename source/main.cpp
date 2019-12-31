@@ -25,7 +25,7 @@
 #include "SMDevice.h"
 
 #include "Adafruit_GFX.h"
-#include "Adafruit_SSD1306.h"
+#include "Adafruit_ST7789.h"
 
 #include "LIS3DH.h"
 
@@ -56,13 +56,14 @@ extern time_t timeDate;
 
 // define the Serial object
 // Serial pc(USBTX, USBRX);
-SPI mySPI(SPI_PSELMOSI0, NC, SPI_PSELSCK0, NC);
+// SPI mySPI(SPI_PSELMOSI0, NC, SPI_PSELSCK0, NC);
 
 // I2C for accelerometer LIS3DH
 I2C myI2C(P0_7, P0_8);
 
 // Display
-Draw myDisplay(mySPI, P0_16, P0_17, P0_14 , 128, 64);
+Draw myDisplay(SPI_MOSI, SPI_MISO, SPI_SCK, SPI_CS_LCD, PIN_LCD_RS_OUT, PIN_LCD_RESET_OUT , 128, 64);
+// Draw myDisplay(mySPI, P0_16, P0_17, P0_14 , 128, 64);
 events::EventQueue globalQueue;
 
 // LIS3DH
@@ -70,8 +71,8 @@ events::EventQueue globalQueue;
 LIS3DH myAccel(myI2C, LIS3DH_DEFAULT_ADDRESS);
 
 // Circular buffer to hold history or messages
-NotificationBuffer notificationBuffer;
-Notification notificationDisplay(notificationBuffer, myDisplay);
+// NotificationBuffer notificationBuffer;
+// Notification notificationDisplay(notificationBuffer, myDisplay);
 
 // Normal watch face
 Normal face(myDisplay);
@@ -109,7 +110,7 @@ void testClearDownTimerCallback() {
     printf("testClearDownTimerCallback: ENTER\r\n");
     _savedClearDown = -1;
     // Close the Notification display
-    globalQueue.call(callback(&notificationDisplay, &Notification::close));
+    // globalQueue.call(callback(&notificationDisplay, &Notification::close));
     printf("testClearDownTimerCallback: EXIT\r\n");
 }
 
@@ -127,8 +128,8 @@ void shutdownWatchFace() {
         globalQueue.cancel(_savedColonCall);
         _savedColonCall = -1;
     }
-    myDisplay.clearDisplay();
-    myDisplay.display();
+    // myDisplay.clearDisplay();
+    // myDisplay.display();
 }
 
 void startVibMotor() {
@@ -187,10 +188,10 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
         shutdownWatchFace();
 
         // Push to circular buffer
-        notificationBuffer.push(msgData);
+        // notificationBuffer.push(msgData);
 
         // Now call the Notification display to display it.
-        globalQueue.call(callback(&notificationDisplay, &Notification::displayCurrent));
+        // globalQueue.call(callback(&notificationDisplay, &Notification::displayCurrent));
 
         // Clear down after X seconds
         if (_savedClearDown != -1) {
@@ -207,7 +208,7 @@ void messageCallback(SharedPtr<uint8_t> bufferPtr) {
     // display.display();
 
     // printf("messageCallback.bufferPtr.get()=%ls\r\n", bufferPtr.get());
-    printf("notificationBuffer.size=%ld\r\n", notificationBuffer.size());
+    // printf("notificationBuffer.size=%ld\r\n", notificationBuffer.size());
     // Dump buffer
     // NotificationBuffer::iterator_t iterator;
     // SharedPtr<MessageData> msgData2;
@@ -253,7 +254,7 @@ void handleButton2() {
     shutdownWatchFace();
 
     // Display the notifications if any.
-    globalQueue.call(callback(&notificationDisplay, &Notification::displayCurrent));
+    // globalQueue.call(callback(&notificationDisplay, &Notification::displayCurrent));
 
     // Start timer callback for 10 seconds to shutdown the notification.
     _periodCall = globalQueue.call_in(10000, callback(&shutdownWatchFace));
@@ -394,7 +395,7 @@ void setupAccel() {
 int main() {
     printf("\r\n main: ENTER \r\n\r\n");
 
-    mySPI.frequency(12000000);
+    // mySPI.frequency(12000000);
 
     // Setup buttons
     setupButtonCallbacks();
@@ -409,7 +410,7 @@ int main() {
     // myDisplay.display();
     wait_ms(2000); // Pause for 2 seconds
     // Clear the buffer
-    myDisplay.clearDisplay();
+    // myDisplay.clearDisplay();
 
     // Place dummy notifications...remove once tested
     globalQueue.call_in(3000, callback(&dummyMessages));

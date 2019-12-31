@@ -3,8 +3,8 @@
         {
             "includePath": [
                 "${workspaceFolder}",
-                "${workspaceFolder}/Adafruit_GFX",
-                "${workspaceFolder}/Adafruit_GFX/fonts",
+                "${workspaceFolder}/drivers/Adafruit_GFX",
+                "${workspaceFolder}/drivers/Adafruit_GFX/fonts",
                 "${workspaceFolder}/LIS3DH",
                 "${workspaceFolder}/mbed-os",
                 "${workspaceFolder}/mbed-os/cmsis",
@@ -226,7 +226,7 @@
                 "${workspaceFolder}/mbed-os/targets/TARGET_NORDIC/TARGET_NRF5x",
                 "${workspaceFolder}/mbed-os/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_NRF52",
                 "${workspaceFolder}/mbed-os/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_NRF52/TARGET_MCU_NRF52832",
-                "${workspaceFolder}/mbed-os/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_NRF52/TARGET_MCU_NRF52832/TARGET_NRF52832_MDK",
+                "${workspaceFolder}/mbed-os/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_NRF52/TARGET_MCU_NRF52832/TARGET_PINE_TIME",
                 "${workspaceFolder}/mbed-os/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_NRF52/TARGET_MCU_NRF52832/config",
                 "${workspaceFolder}/mbed-os/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_NRF52/TARGET_MCU_NRF52832/device",
                 "${workspaceFolder}/mbed-os/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_SDK_14_2",
@@ -290,12 +290,13 @@
                 "${workspaceFolder}/mbed-os/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_SDK_14_2/libraries/strerror",
                 "${workspaceFolder}/mbed-os/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_SDK_14_2/libraries/util",
                 "${workspaceFolder}/source/includes",
-                "${workspaceFolder}/source/utils"
+                "${workspaceFolder}/source/utils",
+                "${workspaceFolder}/drivers/Adafruit_ST7789"
             ],
             "name": "Windows",
             "defines": [
                 "TARGET_MCU_NRF52832",
-                "TARGET_NRF52832_MDK",
+                "TARGET_PINE_TIME",
                 "CMSIS_VECTAB_VIRTUAL",
                 "__MBED__=1",
                 "__FPU_PRESENT=1",

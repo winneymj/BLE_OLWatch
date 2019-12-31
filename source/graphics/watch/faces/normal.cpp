@@ -16,11 +16,11 @@ extern CommonUI commonUI;
 Normal::Normal(Draw& display): _display(display), _shutdown(false) {};
 
 void Normal::displayWatchFace() {
-	// Grab time
-	timeDate = time(NULL);
-	display_t busy = draw();
-	_display.display();
-	_display.clearDisplay();
+	// // Grab time
+	// timeDate = time(NULL);
+	// display_t busy = draw();
+	// _display.display();
+	// _display.clearDisplay();
 }
 
 void Normal::shutdownDisplay() {
@@ -52,10 +52,10 @@ void Normal::drawDate() {
 	char buff[32] = {0};
     strftime(buff, 32, "%a, %b %e, %Y", localtime(&timeDate));	
 
-    _display.setFont(NULL);
-    _display.setTextSize(1);
-    _display.setTextColour(WHITE);
-	_display.drawString(buff, false, 12, 0);
+    // _display.setFont(NULL);
+    // _display.setTextSize(1);
+    // _display.setTextColour(WHITE);
+	// _display.drawString(buff, false, 12, 0);
 }
 
 display_t Normal::ticker() {
@@ -189,7 +189,7 @@ display_t Normal::ticker() {
 	
 	// Draw colon for half a second
 	if(_halfSecond) {
-		_display.fastDrawBitmap(TIME_POS_X + 46 + 2, TIME_POS_Y, colon, FONT_COLON_WIDTH, FONT_COLON_HEIGHT, NOINVERT, 0);
+		// _display.fastDrawBitmap(TIME_POS_X + 46 + 2, TIME_POS_Y, colon, FONT_COLON_WIDTH, FONT_COLON_HEIGHT, NOINVERT, 0);
 	}
 	
 	// Draw AM/PM character
@@ -218,7 +218,7 @@ void Normal::drawTickerNum(tickerData_t* data)
 	uint8_t y = data->y;
 
 	if(!data->moving || yPos == 0 || yPos == 255) {
-		_display.fastDrawBitmap(x, y, bitmap, data->w, data->h, NOINVERT, 0);
+		// _display.fastDrawBitmap(x, y, bitmap, data->w, data->h, NOINVERT, 0);
 	}
 	else
 	{
@@ -226,7 +226,7 @@ void Normal::drawTickerNum(tickerData_t* data)
 		if(prev == 255)
 			prev = data->maxVal;
 
-		_display.fastDrawBitmap(x, y, bitmap, data->w, data->h, NOINVERT, yPos - data->h - TICKER_GAP);
-		_display.fastDrawBitmap(x, y, &data->bitmap[prev * arraySize], data->w, data->h, NOINVERT, yPos);
+		// _display.fastDrawBitmap(x, y, bitmap, data->w, data->h, NOINVERT, yPos - data->h - TICKER_GAP);
+		// _display.fastDrawBitmap(x, y, &data->bitmap[prev * arraySize], data->w, data->h, NOINVERT, yPos);
 	}	
 }

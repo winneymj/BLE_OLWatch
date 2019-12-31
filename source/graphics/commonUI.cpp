@@ -22,7 +22,7 @@ void CommonUI::drawBattery() {
 	else
 		battIcon = battIconFullBitmaps;
 
-	_display.fastDrawBitmap(0, _display.height() - 8, battIcon, BATTERY_ICON_WIDTH, BATTERY_ICON_HEIGHT, NOINVERT, 0);
+	// _display.fastDrawBitmap(0, _display.height() - 8, battIcon, BATTERY_ICON_WIDTH, BATTERY_ICON_HEIGHT, NOINVERT, 0);
 }
 
 // #define DEBUG_OUTPUT
@@ -34,11 +34,11 @@ void CommonUI::drawBLEState() {
 #endif
 	// Solid led if advertising
 	if (gapState.advertising) {
-		_display.fillCircle(3, 3, 3, WHITE);
+		// _display.fillCircle(3, 3, 3, WHITE);
 		// _led1.write(0);
 	}
 	else if (gapState.connected) {
 		// _led1 = !_led1;
-		_display.fillRect(1, 1, 5, 5, WHITE);
+		// _display.fillRect(1, 1, 5, 5, WHITE);
 	}
 }

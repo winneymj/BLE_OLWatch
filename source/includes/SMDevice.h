@@ -22,7 +22,6 @@
 #include "SecurityManager.h"
 #include "LEDService.h"
 #include "Adafruit_GFX.h"
-#include "Adafruit_SSD1306.h"
 
 /** This example demonstrates all the basic setup required
  *  for pairing and setting up link security both as a central and peripheral
